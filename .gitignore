@@ -1,0 +1,15 @@
+# Secrets — keys live in the environment, never in the repo
+.env
+.env.*
+
+# Run outputs: raw API archives stay local (evidence, never committed)
+runs_raw/
+*.json
+
+# runs.jsonl is intentionally NOT ignored — committing rows is the
+# contribution path (see README "Contributing").
+
+# Python
+__pycache__/
+*.pyc
+.venv/
