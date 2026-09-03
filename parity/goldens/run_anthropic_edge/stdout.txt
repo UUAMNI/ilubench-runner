@@ -1,0 +1,17 @@
+Probe set: <REPO>/parity/probes/edge.jsonl (7 probes; running 3)
+Provider:  anthropic (https://api.anthropic.com)
+Model:     claude-mock
+Key:       ANTHROPIC_API_KEY is set
+Plan:      3 probes x 2 arms = 6 API calls, no system prompt, provider default sampling
+  edge-fail-b  arm_A (English prompt) + arm_B (Igbo prompt)
+  edge-badshape  arm_A (English prompt) + arm_B (Igbo prompt)
+  edge-nomodel  arm_A (English prompt) + arm_B (Igbo prompt)
+  ok edge-fail-b arm_A: output_language=mixed
+  FAIL edge-fail-b arm_B: HTTP 500: {"error": {"type": "mock_failure", "code": 500, "message": "mock failure; caller key was [redacted]"}}
+  ok edge-badshape arm_A: output_language=empty
+  ok edge-badshape arm_B: output_language=en
+  ok edge-nomodel arm_A: output_language=mixed
+  ok edge-nomodel arm_B: output_language=ig
+
+Appended 2 row(s) to runs.jsonl; 1 probe(s) failed.
+Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).

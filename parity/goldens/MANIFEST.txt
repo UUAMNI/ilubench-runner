@@ -1,0 +1,5 @@
+captured_at_utc: 2026-09-03T00:46:39+00:00
+python: 3.11.15 (CPython)
+platform: Linux x86_64
+runner.py_sha256: 2e64e5d4fff0051bf70387c4c000e1052cec4e281de7e9d4204e258f980992f6
+scenarios: 40

@@ -1,0 +1,9 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 2)
+Provider:  openai (https://api.openai.com/v1)
+Model:     (not set — pass --model; omit to list available models)
+Key:       OPENAI_API_KEY is NOT set
+Plan:      2 probes x 2 arms = 4 API calls, no system prompt, provider default sampling
+  ilu-001  arm_A (English prompt) + arm_B (Igbo prompt)
+  ilu-003  arm_A (English prompt) + arm_B (Igbo prompt)
+
+ERROR: no API key found. Set OPENAI_API_KEY (or point --api-key-env at the variable that holds your key).

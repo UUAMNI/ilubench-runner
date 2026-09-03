@@ -1,0 +1,6 @@
+usage: runner.py [-h]
+                 [--provider {anthropic,compatible,google,moonshot,openai}]
+                 [--model MODEL] [--base-url BASE_URL]
+                 [--api-key-env API_KEY_ENV] [--probe-set PATH]
+                 [--probes ID,ID] [--out PATH] [--raw-dir DIR] [--dry-run]
+runner.py: error: --provider compatible requires --base-url

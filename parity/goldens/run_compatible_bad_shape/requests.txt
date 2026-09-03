@@ -1,0 +1,1 @@
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE badshape [[badshape]]"}]}

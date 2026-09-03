@@ -1,6 +1,6 @@
 # PORT_PLAN.md — ilubench-runner, Python → Go
 
-Status: **awaiting approval.** No Go has been written. `runner.py` is untouched and
+Status: **approved 2026-09-03; Milestone 0 in progress.** No Go has been written yet. `runner.py` is untouched and
 stays runnable until the cutover in Milestone 6 is verified.
 
 This document has two parts. Part A is the Phase 1 assessment (what the runner
@@ -227,7 +227,7 @@ dialects with canned responses, including deliberate failures, an empty
 response, HTML characters, odd floats, and a key in an error body; (b)
 `py_shim.py`, which imports `runner.py` unmodified and redirects the hardcoded
 Anthropic/Google/HuggingFace hosts to the mock; (c) ~20 scenarios covering every
-row in A5 that is observable without real keys; (d) `parity/capture.sh`, which
+row in A5 that is observable without real keys; (d) `parity/harness.py capture`, which
 runs Python and stores goldens (stdout, stderr, exit code, `runs.jsonl` bytes,
 raw files with `date_utc` masked, plus a manifest recording the Python
 version). Exit criterion: Python-vs-Python is green, so the harness itself is
@@ -299,7 +299,7 @@ tested here too. This milestone runs on **your machine** (keys, network).
   records the Python version; you regenerate once on your machine so drift
   between 3.11 here and whatever you run is caught, not hidden.
 - **CI runs the suite on every push.** `go vet`, `go test ./...`, then
-  `parity/run.sh`.
+  `parity/harness.py check --impl go`.
 - **Deviations are a list, not a surprise.** `PORT_NOTES.md` carries a
   "Known deviations" section; the parity suite has one test that asserts the
   list is complete (each deviation has a scenario that exercises it).

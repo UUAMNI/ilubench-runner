@@ -1,0 +1,41 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "moonshot",
+  "endpoint": "<MOCK>/ok/v1",
+  "requested_model": "kimi-mock",
+  "reported_model": "mock-gpt-1.5-reported",
+  "probe_id": "ilu-001",
+  "arm": "arm_A",
+  "prompt": "Explain this proverb: Gidi gidi bụ ugwu eze.",
+  "response_text": "This proverb means that unity is strength. A king is powerful because of the people around him, and a crowd cannot be pushed aside.",
+  "raw_api_response": {
+    "id": "chatcmpl-mock",
+    "object": "chat.completion",
+    "created": 1700000000,
+    "model": "mock-gpt-1.5-reported",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "This proverb means that unity is strength. A king is powerful because of the people around him, and a crowd cannot be pushed aside."
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

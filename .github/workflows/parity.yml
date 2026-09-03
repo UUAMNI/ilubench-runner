@@ -1,0 +1,25 @@
+# Parity suite: holds every implementation to the characterization record of
+# runner.py captured in parity/goldens. Milestone 0 runs only the Python side
+# (proves the harness and catches Python-version drift); the Go binary is added
+# in Milestone 2 of PORT_PLAN.md.
+name: parity
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-characterization:
+    name: runner.py vs goldens (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Check runner.py against its own goldens
+        run: python3 parity/harness.py check --impl python

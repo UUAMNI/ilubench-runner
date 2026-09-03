@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<REPO>/runner.py", line 443, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "<REPO>/runner.py", line 431, in main
+    with open(args.out, "a", encoding="utf-8") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'nodir/rows.jsonl'

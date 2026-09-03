@@ -1,0 +1,8 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 1)
+Provider:  google (https://generativelanguage.googleapis.com)
+Model:     (not set — pass --model; omit to list available models)
+Key:       GEMINI_API_KEY is set
+Plan:      1 probes x 2 arms = 2 API calls, no system prompt, provider default sampling
+  ilu-003  arm_A (English prompt) + arm_B (Igbo prompt)
+
+Dry run complete. No API calls made, nothing written.

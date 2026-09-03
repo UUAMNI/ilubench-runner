@@ -1,0 +1,15 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "google",
+  "endpoint": "https://generativelanguage.googleapis.com",
+  "requested_model": "gemini-mock",
+  "reported_model": "gemini-mock",
+  "probe_id": "edge-badshape",
+  "arm": "arm_A",
+  "prompt": "EDGE badshape [[badshape]]",
+  "response_text": "",
+  "raw_api_response": {
+    "unexpected": true,
+    "choices": "not a list"
+  }
+}

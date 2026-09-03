@@ -1,0 +1,44 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "google",
+  "endpoint": "https://generativelanguage.googleapis.com",
+  "requested_model": "gemini-mock",
+  "reported_model": "gemini-mock-reported",
+  "probe_id": "ilu-003",
+  "arm": "arm_A",
+  "prompt": "Explain this proverb: Igwe bụ ike.",
+  "response_text": "This proverb means unity is strength. Many hands make light work.",
+  "raw_api_response": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "This proverb means unity is stre"
+            },
+            {
+              "text": "ngth. Many hands make light work."
+            }
+          ],
+          "role": "model"
+        },
+        "finishReason": "STOP"
+      }
+    ],
+    "modelVersion": "gemini-mock-reported",
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

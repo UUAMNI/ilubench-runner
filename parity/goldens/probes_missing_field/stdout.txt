@@ -1,0 +1,1 @@
+ERROR: bad probe set: probe on line 2 of <REPO>/parity/probes/missing_field.jsonl is missing 'prompt_ig'

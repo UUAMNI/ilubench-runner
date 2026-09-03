@@ -1,0 +1,15 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com",
+  "requested_model": "claude-mock",
+  "reported_model": "claude-mock",
+  "probe_id": "edge-badshape",
+  "arm": "arm_A",
+  "prompt": "EDGE badshape [[badshape]]",
+  "response_text": "",
+  "raw_api_response": {
+    "unexpected": true,
+    "choices": "not a list"
+  }
+}

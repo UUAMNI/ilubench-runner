@@ -1,0 +1,48 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com",
+  "requested_model": "claude-mock",
+  "reported_model": "claude-mock-reported",
+  "probe_id": "ilu-001",
+  "arm": "arm_B",
+  "prompt": "Kọwaa ilu a: Gidi gidi bụ ugwu eze.",
+  "response_text": "Ilu a pụtara na ịdị n'otu bụ ike. Eze na-enwe ike site n'aka ndị ya. Igwe bụ ike; ọ bụ ya mere anyị ji ekwu na umunna bụ ike.",
+  "raw_api_response": {
+    "id": "msg_mock",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-mock-reported",
+    "content": [
+      {
+        "type": "text",
+        "text": "Ilu a pụtara na ịdị n'otu bụ ike. Eze na-enwe ike site n'aka n"
+      },
+      {
+        "type": "tool_use",
+        "id": "tu_1",
+        "name": "ignored",
+        "input": {}
+      },
+      {
+        "type": "text",
+        "text": "dị ya. Igwe bụ ike; ọ bụ ya mere anyị ji ekwu na umunna bụ ike."
+      }
+    ],
+    "stop_reason": "end_turn",
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

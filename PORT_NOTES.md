@@ -128,3 +128,53 @@ characterization scenarios captured from Python.
 - `User-Agent` is `ilubench/<version>` instead of `Python-urllib/3.x`.
 - Request bodies are compact JSON; Python sends spaced JSON. Semantically
   identical.
+
+---
+
+## Milestone 0 (2026-09-03): the characterization harness
+
+**The harness is Python, not Go.** It exists to record what `runner.py` does,
+so it lives next to the reference implementation and shares its language. The
+Go module will stay free of test-tooling concerns; Go tests consume the
+goldens as plain files.
+
+**Wrap, never modify.** `parity/py_shim.py` imports `runner.py` and replaces
+two functions at runtime (`runner._request_json` and
+`urllib.request.urlopen`) to redirect the hardcoded Anthropic, Google and
+HuggingFace hosts to a local mock. This is monkeypatching, which is
+acceptable in test tooling and never in production code; the equivalent in Go
+is a struct field holding the endpoint, set by `main` and overridden by tests.
+
+**Determinism comes from the mock, masking, and a scrubbed environment.**
+Canned replies are keyed by the exact prompt, so both implementations see the
+same bytes; the mock also logs every request so the wire shape (no system
+prompt, no sampling overrides, `max_tokens` only for Anthropic) is part of the
+record. Volatile values (date, temp dir, repo path, port, `date_utc`) are
+masked to placeholders, and each run gets `TZ=UTC`, a UTF-8 locale and no
+`*_API_KEY` or proxy variables.
+
+**Unreproducible tails are normalized, never ignored wholesale.** A handful of
+stdout lines end in CPython exception text (`KeyError: 'choices'`, the JSON
+decoder's message). Comparison keeps the stable prefix exact, including
+`HTTP <code>: <body>`, and replaces only the tail with `<ERR>` on both sides.
+This keeps redaction and HTTP error reporting under test while admitting the
+one thing Go cannot copy.
+
+**Goldens are flattened because of `.gitignore`.** The repo ignores any
+directory named `runs_raw` and every `*.json`. Git cannot re-include files
+inside an ignored directory, so written files are stored as
+`tree/runs_raw__<name>.json` and a single negation rule re-includes JSON under
+`parity/goldens/`.
+
+**The edge fixtures exercise what the Go encoder will get wrong by default.**
+The mock's raw responses carry `<b>&</b>` (Go HTML-escapes these), a U+2028
+line separator (Go escapes it, Python does not), a U+001C control character
+(both escape it, differently spelled), floats like `1E5` and `0.10` (Python
+re-serializes them as `100000.0` and `0.1`), a 20-digit integer, empty
+containers, and NFD-decomposed Igbo text with tone marks. Every one of these
+is now a failing test waiting for Milestone 1.
+
+**Known deviation noted during capture:** a probe file whose `id` is not a
+string (for example a number) is accepted by Python and printed with Python's
+repr; the Go port will reject it with `ERROR: bad probe set:` and exit 1. No
+scenario pins this because Python's behavior is not a contract anyone relies on.

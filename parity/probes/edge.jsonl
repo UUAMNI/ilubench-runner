@@ -1,0 +1,7 @@
+{"id": "edge-empty", "prompt_en": "EDGE empty reply", "prompt_ig": "EDGE digits reply", "note": "extra fields are ignored"}
+{"id": "edge-long", "prompt_en": "EDGE long english", "prompt_ig": "EDGE long igbo"}
+{"id": "edge-nomodel", "prompt_en": "EDGE nomodel [[nomodel]]", "prompt_ig": "EDGE nomodel ig [[nomodel]]"}
+{"id": "edge-fail-b", "prompt_en": "EDGE fail-b arm A is fine", "prompt_ig": "EDGE fail-b [[http:500]]"}
+{"id": "edge-fail-a", "prompt_en": "EDGE fail-a [[http:429]]", "prompt_ig": "EDGE fail-a arm B must never be called"}
+{"id": "edge-badshape", "prompt_en": "EDGE badshape [[badshape]]", "prompt_ig": "EDGE badshape arm B"}
+{"id": "edge-nonjson", "prompt_en": "EDGE nonjson [[nonjson]]", "prompt_ig": "EDGE nonjson arm B"}

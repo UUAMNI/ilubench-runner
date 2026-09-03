@@ -1,0 +1,2 @@
+ERROR: could not fetch the probe set from HuggingFace (HTTP Error 404: Not Found).
+       Offline? Point --probe-set at a local file, e.g. --probe-set examples/sample_probes.jsonl
