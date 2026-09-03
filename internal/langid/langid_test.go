@@ -45,12 +45,6 @@ func TestFactualNotes(t *testing.T) {
 	}
 }
 
-func TestLower(t *testing.T) {
-	if got := Lower("İstanbul ẞ ABC"); got != "i̇stanbul ß abc" {
-		t.Errorf("Lower = %q", got)
-	}
-}
-
 // atoms are the building blocks of the generated corpus: every stopword,
 // Igbo letters in composed and decomposed forms, tone marks, both apostrophes,
 // digits, numerics that are not digits, underscore, every whitespace class

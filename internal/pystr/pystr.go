@@ -1,8 +1,16 @@
-package langid
+// Package pystr reproduces the handful of Python str behaviours that
+// runner.py's output depends on and that Go's strings/unicode packages get
+// subtly different: which code points count as whitespace, full-case
+// lowercasing, code-point (not byte) slicing, and str.splitlines().
+//
+// Each function is named after the Python method it mirrors so a reader can
+// check it against the CPython documentation directly.
+package pystr
 
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // IsSpace reports whether r is whitespace by Python's str.isspace() rule.
@@ -48,4 +56,38 @@ func TruncateRunes(s string, n int) string {
 		return s
 	}
 	return string(r[:n])
+}
+
+// SplitLines splits s like Python's str.splitlines(): on \n, \r, \r\n, and
+// also on \v, \f, U+001C..U+001E, U+0085, U+2028 and U+2029, without keeping
+// the separators and without producing a trailing empty line. runner.py
+// splits the probe file this way, so a JSONL file is read the same here.
+func SplitLines(s string) []string {
+	var lines []string
+	start := 0
+	for i := 0; i < len(s); {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		if !isLineBreak(r) {
+			i += size
+			continue
+		}
+		lines = append(lines, s[start:i])
+		i += size
+		if r == '\r' && i < len(s) && s[i] == '\n' {
+			i++
+		}
+		start = i
+	}
+	if start < len(s) {
+		lines = append(lines, s[start:])
+	}
+	return lines
+}
+
+func isLineBreak(r rune) bool {
+	switch r {
+	case '\n', '\r', '\v', '\f', 0x1c, 0x1d, 0x1e, 0x85, 0x2028, 0x2029:
+		return true
+	}
+	return false
 }

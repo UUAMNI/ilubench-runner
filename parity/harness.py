@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import hashlib
+import json
 import os
 import platform
 import re
@@ -279,8 +280,23 @@ def select(names: list[str]) -> list[dict]:
     return [by[n] for n in names]
 
 
+def write_scenarios_json() -> None:
+    """parity/goldens/scenarios.json: the scenario list as data, so the Go
+    golden test can replay it without importing Python."""
+    GOLDENS.mkdir(exist_ok=True)
+    (GOLDENS / "scenarios.json").write_text(
+        json.dumps(SCENARIOS, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def cmd_export(args) -> int:
+    write_scenarios_json()
+    print(f"wrote {GOLDENS / 'scenarios.json'} ({len(SCENARIOS)} scenarios)")
+    return 0
+
+
 def cmd_capture(args) -> int:
     scenarios = select(args.scenario)
+    write_scenarios_json()
     with Mock(HERE / ".mock_requests.log") as mock:
         for s in scenarios:
             rec = run_scenario("python", s, mock, None)
@@ -299,7 +315,9 @@ def cmd_capture(args) -> int:
 
 
 def cmd_check(args) -> int:
-    scenarios = select(args.scenario)
+    scenarios = [s for s in select(args.scenario) if s["milestone"] <= args.milestone]
+    if args.bin:
+        args.bin = os.path.abspath(args.bin)  # scenarios run with cwd set to a temp dir
     failed = skipped = passed = 0
     with Mock(HERE / ".mock_requests.log") as mock:
         for s in scenarios:
@@ -329,7 +347,7 @@ def cmd_check(args) -> int:
 def cmd_list(args) -> int:
     for s in SCENARIOS:
         tag = " [shim]" if s["shim"] else ""
-        print(f"{s['name']:40}{tag}  {s['note']}")
+        print(f"M{s['milestone']} {s['name']:40}{tag}  {s['note']}")
     return 0
 
 
@@ -342,8 +360,12 @@ def main() -> int:
     p = sub.add_parser("check", help="compare an implementation against the goldens")
     p.add_argument("--impl", choices=["python", "go"], required=True)
     p.add_argument("--bin", help="path to the Go binary (for --impl go)")
+    p.add_argument("--milestone", type=int, default=99,
+                   help="only scenarios at or below this PORT_PLAN.md milestone")
     p.add_argument("scenario", nargs="*")
     p.set_defaults(fn=cmd_check)
+    p = sub.add_parser("export", help="write goldens/scenarios.json for the Go golden test")
+    p.set_defaults(fn=cmd_export)
     p = sub.add_parser("list", help="list scenarios")
     p.set_defaults(fn=cmd_list)
     args = ap.parse_args()

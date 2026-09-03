@@ -1,6 +1,6 @@
 # PORT_PLAN.md — ilubench-runner, Python → Go
 
-Status: **approved 2026-09-03. Milestones 0 and 1 complete; Milestone 2 next.** `runner.py` is untouched and
+Status: **approved 2026-09-03. Milestones 0, 1 and 2 complete; Milestone 3 next.** `runner.py` is untouched and
 stays runnable until the cutover in Milestone 6 is verified.
 
 This document has two parts. Part A is the Phase 1 assessment (what the runner

@@ -238,3 +238,70 @@ less trustworthy.
 raw archive and `runs.jsonl` row the Python runner wrote in Milestone 0 and
 requires this package to reproduce the bytes. It needs no Python, so it is
 the byte-format regression test that runs everywhere.
+
+---
+
+## Milestone 2 (2026-09-03): CLI, probes, dry run, model listing
+
+**`pystr` became its own package.** Milestone 1 kept the Python-string helpers
+inside `langid`; Milestone 2 needed them in `probes` and `provider` too, and a
+package that imports `langid` just to split lines would be the wrong
+dependency direction. Moving five functions into `internal/pystr` early is
+cheaper than living with the odd import; Go makes such moves mechanical
+because every use is a qualified identifier.
+
+**`flag` with `ContinueOnError` and a silenced `Usage`.** The default
+`ExitOnError` mode calls `os.Exit` inside the library, which would make the
+exit code untestable and the usage text unreadable from tests. Parsing
+returns an error instead; `cli.Parse` decides that `-h` writes help to stdout
+with exit 0 and everything else writes usage plus `ilubench: error: ...` to
+stderr with exit 2, in the same order argparse checks things (invalid choice
+first, then the inferred `compatible`, then the two custom checks).
+
+**Injected dependencies live in one `Options` struct, not globals.** `run.Main`
+takes stdout, stderr, an environment lookup, an HTTP client and the three
+endpoint overrides. Tests fill them with buffers, a map and a mock; `main`
+fills them with the real things in three lines. The overrides change where a
+request goes and never what is printed or archived, so `Probe set:` still
+names the published HuggingFace URL when the fetch was redirected to a mock,
+exactly as the Python shim behaves.
+
+**A sentinel error type per failure class, not error strings.** `runner.py`
+routes probe-loading failures by exception type (`FileNotFoundError`,
+`OSError`, `ValueError`). Go has no exception hierarchy, so `probes.Error`
+carries a `Kind` and `errors.As` recovers it at the print site. Comparing
+error strings would have worked today and broken on the first reworded
+message.
+
+**HTTP errors keep the body, transport errors keep the cause.** `HTTPError`
+renders itself as `HTTP <code>: <first 300 code points>` and `NetError`
+wraps the underlying `net` error, mirroring `urllib.error.HTTPError` versus
+`URLError`. `provider.Detail` is the one place that turns either into the
+line the user sees, with the key redacted, so no call site can forget.
+
+**Python's `repr()` is a small package.** Two diagnostics print a Python list
+literal, and Go's `%q` is not the same thing (double quotes, `\x1c` style
+escapes). `pyrepr` implements the quote-selection and escaping rules and is
+proven against CPython by a differential test; U+2028 turned out to be
+non-printable in Python, so it is escaped, which the test caught before the
+table did.
+
+**Goldens are replayed in-process by `go test`.** `internal/run/golden_test.go`
+reads `parity/goldens/scenarios.json`, starts the same Python mock the
+harness uses, and calls `run.Main` per scenario with the endpoint overrides
+standing in for the Python shim. The same masks and the same tail
+normalization live in both `harness.py` and this test, on purpose: the Go
+side proves the in-process path and the shim scenarios, the harness proves
+the built binary. `t.Chdir` (Go 1.24) gives each scenario its own working
+directory without touching the process for other packages.
+
+**Scenarios carry a milestone number.** A scenario above the current
+milestone is skipped, not failed, in both CI jobs. The number is raised in
+one place per milestone (`golden_test.go` and the `--milestone` flag in
+`go.yml`), which keeps CI honest about what the port claims to do today.
+
+**Deviations added this milestone.** Non-string `id`, `prompt_en` or
+`prompt_ig` values are rejected with `ERROR: bad probe set:` (Python accepts
+them and fails later or sends null to the API). Python's `json.loads` accepts
+`NaN` and `Infinity` literals; `pyjson.Parse` does not, so a probe file
+containing them is refused. Neither occurs in any published probe set.

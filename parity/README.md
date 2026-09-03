@@ -8,7 +8,8 @@ Nothing here is used by `runner.py` itself.
 python3 parity/harness.py list                       # the scenarios and why each exists
 python3 parity/harness.py capture                    # re-record goldens from runner.py
 python3 parity/harness.py check --impl python        # runner.py against the goldens (must be green)
-python3 parity/harness.py check --impl go --bin ./bin/ilubench
+python3 parity/harness.py check --impl go --bin ./bin/ilubench --milestone 2
+python3 parity/harness.py export           # refresh goldens/scenarios.json for the Go golden test
 ```
 
 | File | Role |
@@ -33,5 +34,8 @@ Masks: `<TODAY>` (local date under `TZ=UTC`), `<DATE_UTC>`, `<WORK>`, `<REPO>`,
 review the diff before committing it.
 
 Scenarios marked `[shim]` are skipped for `--impl go` by this harness; the Go
-test suite runs them in-process with the provider endpoints pointed at the
-same mock, reading the same goldens (Milestone 3).
+test suite (`internal/run/golden_test.go`) runs them in-process with the
+provider endpoints pointed at the same mock, reading the same goldens. Each
+scenario carries the PORT_PLAN.md milestone at which the Go port must pass
+it; `--milestone N` runs those at or below N, and `goldens/scenarios.json`
+(written by `export` and `capture`) is how the Go test sees the list.

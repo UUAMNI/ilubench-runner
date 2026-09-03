@@ -20,3 +20,6 @@ __pycache__/
 
 # parity harness scratch
 /parity/.mock_requests.log
+
+# Local build output
+/bin/

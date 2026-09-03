@@ -16,6 +16,8 @@ import (
 	"strings"
 
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/UUAMNI/ilubench-runner/internal/pystr"
 )
 
 // wordPattern is Python's r"[^\W\d_]+(?:'[^\W\d_]+)?" spelled for RE2.
@@ -43,10 +45,10 @@ var igboWords = map[string]bool{
 // Detect classifies a response as "ig", "en", "mixed" or "empty" by diacritic
 // and stopword density, exactly as runner.detect_output_language does.
 func Detect(text string) string {
-	if Strip(text) == "" {
+	if pystr.Strip(text) == "" {
 		return "empty"
 	}
-	words := wordPattern.FindAllString(norm.NFC.String(Lower(text)), -1)
+	words := wordPattern.FindAllString(norm.NFC.String(pystr.Lower(text)), -1)
 	if len(words) == 0 {
 		return "empty"
 	}
@@ -70,8 +72,8 @@ func Detect(text string) string {
 // code points of the whitespace-collapsed response, and the raw archive path
 // (already in POSIX form). No rubric judgment is made here.
 func FactualNotes(text, rawPath string) string {
-	words := Fields(text)
-	opening := TruncateRunes(strings.Join(words, " "), 90)
+	words := pystr.Fields(text)
+	opening := pystr.TruncateRunes(strings.Join(words, " "), 90)
 	return fmt.Sprintf(
 		"API run, auto-captured. ~%d words. Opens: \"%s...\". Full raw response: %s. Rubric axes pending human score.",
 		len(words), opening, rawPath)

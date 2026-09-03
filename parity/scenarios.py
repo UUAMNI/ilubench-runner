@@ -23,6 +23,7 @@ Fields:
            python_traceback  Python must print a traceback; other
                              implementations must print nothing
   note     why the scenario exists, or which deviation it documents
+  milestone  PORT_PLAN.md milestone at which the Go port must pass it (default by name)
 """
 
 SAMPLE = "{REPO}/examples/sample_probes.jsonl"
@@ -36,9 +37,15 @@ KEY_GOOGLE = {"GEMINI_API_KEY": "AIza-parity-0001"}
 COMPAT = ["--base-url", "{MOCK}/ok/v1", "--model", "mock-gpt", "--probe-set", EDGE]
 
 
-def S(name, args, env=None, shim=False, profile="ok", pre=(), stdout="exact", stderr="empty", note=""):
+def S(name, args, env=None, shim=False, profile="ok", pre=(), stdout="exact", stderr="empty", note="",
+      milestone=None):
+    # Milestone (PORT_PLAN.md B2) at which the Go port must pass this scenario:
+    # 2 = CLI, probe loading, dry run, model listing; 3 = probe execution.
+    if milestone is None:
+        milestone = 3 if name.startswith("run_") or name == "hf_probe_set_run" else 2
     return {"name": name, "args": list(args), "env": dict(env or {}), "shim": shim,
-            "profile": profile, "pre": list(pre), "stdout": stdout, "stderr": stderr, "note": note}
+            "profile": profile, "pre": list(pre), "stdout": stdout, "stderr": stderr, "note": note,
+            "milestone": milestone}
 
 
 SCENARIOS = [
