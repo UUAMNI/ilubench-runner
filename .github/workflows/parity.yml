@@ -23,3 +23,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Check runner.py against its own goldens
         run: python3 parity/harness.py check --impl python
+
+  go-unit:
+    name: Go vet + tests (with differential tests against runner.py)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go vet ./...
+      - run: go test ./... -v 2>&1 | grep -E "^(---|ok|FAIL|PASS|\s+\w+_test.go)" 

@@ -178,3 +178,63 @@ is now a failing test waiting for Milestone 1.
 string (for example a number) is accepted by Python and printed with Python's
 repr; the Go port will reject it with `ERROR: bad probe set:` and exit 1. No
 scenario pins this because Python's behavior is not a contract anyone relies on.
+
+---
+
+## Milestone 1 (2026-09-03): `langid` and `pyjson`
+
+**The Go module pins `go 1.24` and one dependency.** `golang.org/x/text`
+v0.30.0 is the last line that builds on Go 1.24 without a toolchain download,
+and `go mod tidy` wrote the `toolchain` line automatically. Tests run with
+`GOTOOLCHAIN=local` so a machine with the pinned Go never downloads another.
+
+**`internal/pyref` is a test-only helper that lives in a normal package.** Go
+has no notion of a test-support package; the convention is a small internal
+package imported only from `_test.go` files. It shells out to `python3` and
+skips the test when Python is absent, so `go test ./...` passes on a bare Go
+machine while CI, which has Python, runs the differential tests for real.
+
+**Differential tests generate their corpus in Go and ask CPython for the
+answer.** Fixed table tests pin the cases already known; the generated corpus
+(1,500 strings for `langid`, 600 values for `pyjson`, deterministic seed)
+finds the cases nobody thought of. The reference is `runner.py` itself, not
+a re-derivation, so a wrong understanding of Python cannot pass its own test.
+
+**`langid` matched on the first run.** The three Unicode decisions made in
+planning (RE2 `[\p{L}\p{Nl}\p{No}]` for Python's `[^\W\d_]`, the U+001C to
+U+001F whitespace gap, and U+0130 in `lower()`) were sufficient: zero
+mismatches over the generated corpus. `Lower` pre-expands U+0130 to
+"i" + U+0307 because Python's `str.lower()` uses full case mapping and Go's
+`strings.ToLower` uses the simple mapping; the combining mark then splits
+the word in both tokenizers.
+
+**`pyjson` keeps number literals, not float64s.** Python's `json` decides
+int versus float by the literal's spelling: anything with `.`, `e` or `E` is
+a float printed with `repr()`, everything else is an arbitrary-precision int
+printed verbatim. `Number` is therefore a string; `formatNumber` parses it
+with `math/big` or `strconv.ParseFloat` only at output time, and `1E5`
+becomes `100000.0` exactly as the raw archives show.
+
+**`FloatRepr` is Python's `repr(float)` layout over Go's shortest digits.**
+`strconv.FormatFloat(f, 'e', -1, 64)` yields the same shortest round-trip
+digits that CPython's `dtoa` produces; the difference is layout. Python
+switches to scientific notation when the decimal point position is below
+-3 or above 16, Go's `%g` switches at a different threshold, so the layout
+is applied by hand. The differential test covers subnormals, `MaxFloat64`,
+`-0.0` and out-of-range literals that become `Infinity`.
+
+**Go's `-0.0` is `+0`.** A constant expression like `-0.0` is evaluated
+exactly at compile time, and exact zero has no sign, so the test uses
+`math.Copysign(0, -1)`. The kind of thing an interviewer asks.
+
+**`Parse` uses `encoding/json` as a tokenizer.** `json.Decoder.Token()` with
+`UseNumber()` returns delimiters, strings, literals and numbers one at a
+time, which is enough to rebuild objects in insertion order with Python's
+duplicate-key rule (first position, last value) and to reject trailing data
+as `json.loads` does. Writing a JSON lexer by hand would be more code and
+less trustworthy.
+
+**The 68 golden documents are a test.** `TestGoldensRoundTrip` parses every
+raw archive and `runs.jsonl` row the Python runner wrote in Milestone 0 and
+requires this package to reproduce the bytes. It needs no Python, so it is
+the byte-format regression test that runs everywhere.
