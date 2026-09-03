@@ -8,7 +8,7 @@ Nothing here is used by `runner.py` itself.
 python3 parity/harness.py list                       # the scenarios and why each exists
 python3 parity/harness.py capture                    # re-record goldens from runner.py
 python3 parity/harness.py check --impl python        # runner.py against the goldens (must be green)
-python3 parity/harness.py check --impl go --bin ./bin/ilubench --milestone 2
+python3 parity/harness.py check --impl go --bin ./bin/ilubench --milestone 3
 python3 parity/harness.py export           # refresh goldens/scenarios.json for the Go golden test
 ```
 

@@ -305,3 +305,57 @@ one place per milestone (`golden_test.go` and the `--milestone` flag in
 them and fails later or sends null to the API). Python's `json.loads` accepts
 `NaN` and `Infinity` literals; `pyjson.Parse` does not, so a probe file
 containing them is refused. Neither occurs in any published probe set.
+
+---
+
+## Milestone 3 (2026-09-03): probe execution, raw archive, rows
+
+**Every golden is green.** All 40 characterization scenarios pass in-process
+(`go test ./internal/run`), and the 31 that do not need host redirection
+pass through the built binary (`parity/harness.py check --impl go
+--milestone 3`). `runs.jsonl` rows and raw archives are byte-identical to
+Python's after date masking; the wire log shows the same requests in the
+same order with the same auth headers.
+
+**Response parsing copies Python's leniency per field, not a schema.**
+runner.py reads some fields with `.get(key, default)` and indexes others
+directly, so a missing `content` on Anthropic is an empty response while a
+missing `choices` on OpenAI is a failed arm. `complete.go` reproduces that
+distinction case by case and `TestTextExtraction` pins each one, including
+the bad-shape fixture that is a failure on one dialect and an empty success
+on the other two. A JSON schema would have been tidier and wrong.
+
+**One struct per arm result.** `provider.Completion` carries the text, the
+model id the API reported, and the raw value for the archive. Python returns
+a three-tuple; a named struct is Go's equivalent and lets a field be added
+later without touching every caller.
+
+**The arm loop is a method on a `job`.** Once the plan has printed, the
+remaining state (config, endpoint, probe set, client, secrets, clock) is
+bundled into one struct so `execute` reads like the Python loop instead of
+a function with nine parameters. Small structs used this way are how Go
+code stays flat without classes.
+
+**`pathlib` semantics needed their own function.** `filepath.Clean` resolves
+`..` and pathlib does not, and `Path(".") / name` drops the dot while
+`f"{raw_dir.as_posix()}/{name}"` keeps it, so `notes` and `evidence` can
+differ for the same directory. `pyPath` and `pyJoin` reproduce exactly that,
+proven by a differential test against `PurePosixPath` over generated paths.
+
+**`isoformat()` needs a special case.** Python omits the fractional part
+when the microsecond field is zero, which Go's fixed layouts cannot express,
+so the timestamp is built in two steps. The parity goldens mask `date_utc`,
+so this format is pinned by its own differential test instead.
+
+**Archives are written atomically now (Milestone 4a, part one).** A temp
+file in the same directory plus `rename(2)` means a reader can never see a
+half-written archive. Parity does not observe this, which is why it could
+land early; the signal handling half of 4a is still to come.
+
+**Deviations added this milestone.** A provider returning a non-string
+`model` (say `null`) yields the requested id in the row, where Python would
+write `null`. Filesystem failures during the run (unwritable archive
+directory, missing `--out` directory) print an `ERROR:` line and exit 1
+instead of a traceback; the side effects before the failure are identical.
+The `"content"` on the OpenAI dialect must be a string or null; Python would
+carry a list through and crash later.

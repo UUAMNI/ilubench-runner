@@ -14,13 +14,16 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/UUAMNI/ilubench-runner/internal/cli"
+	"github.com/UUAMNI/ilubench-runner/internal/langid"
 	"github.com/UUAMNI/ilubench-runner/internal/probes"
 	"github.com/UUAMNI/ilubench-runner/internal/provider"
+	"github.com/UUAMNI/ilubench-runner/internal/pyjson"
 	"github.com/UUAMNI/ilubench-runner/internal/pyrepr"
 	"github.com/UUAMNI/ilubench-runner/internal/pystr"
 )
@@ -41,6 +44,7 @@ type Options struct {
 	Stderr io.Writer
 	Getenv func(string) string
 	HTTP   *http.Client
+	Now    func() time.Time
 
 	// Endpoint overrides for the hosts runner.py hardcodes. They change where
 	// requests go, never what is printed or archived as the endpoint.
@@ -61,6 +65,9 @@ func (o *Options) fill() {
 	}
 	if o.HTTP == nil {
 		o.HTTP = provider.NewHTTPClient()
+	}
+	if o.Now == nil {
+		o.Now = time.Now
 	}
 	if o.AnthropicRoot == "" {
 		o.AnthropicRoot = provider.AnthropicRoot
@@ -209,9 +216,147 @@ func Main(args []string, o Options) int {
 		return 1
 	}
 
-	// Milestone 3 of PORT_PLAN.md adds the arm loop, raw archive and rows here.
-	fmt.Fprintln(out, "\nERROR: probe execution is not implemented yet (Milestone 3 of PORT_PLAN.md); use runner.py.")
-	return 1
+	j := &job{cfg: cfg, out: out, endpoint: endpoint, set: set, probeIDs: probeIDs,
+		client: client, secrets: secrets, now: o.Now}
+	return j.execute(ctx)
+}
+
+// job is one non-dry run once the plan has printed and the client exists.
+type job struct {
+	cfg      *cli.Config
+	out      io.Writer
+	endpoint string // what is printed and archived, never the test override
+	set      *probes.Set
+	probeIDs []string
+	client   *provider.Client
+	secrets  []string
+	now      func() time.Time
+}
+
+// execute is the arm loop of runner.main(), with its exact side-effect
+// order: the raw directory and its .gitignore exist before any call; a raw
+// file is written per successful arm, so arm A's archive survives an arm B
+// failure; a failed arm A skips arm B; rows for successful probes are
+// appended even when other probes failed; exit 2 if any probe failed.
+func (j *job) execute(ctx context.Context) int {
+	out := j.out
+	rawDir := pyPath(j.cfg.RawDir)
+	if err := os.MkdirAll(filepath.FromSlash(rawDir), 0o777); err != nil {
+		fmt.Fprintf(out, "\nERROR: could not create %s: %v\n", rawDir, err)
+		return 1
+	}
+	// Belt and braces: raw archives never enter git. Overwritten every run.
+	if err := os.WriteFile(filepath.FromSlash(pyJoin(rawDir, ".gitignore")), []byte("*\n"), 0o644); err != nil {
+		fmt.Fprintf(out, "\nERROR: could not write %s: %v\n", pyJoin(rawDir, ".gitignore"), err)
+		return 1
+	}
+
+	today := j.now().Format("2006-01-02") // local date, computed once, like date.today()
+	modelSlug := slug(j.cfg.Model)
+	var rows []pyjson.Value
+	failures := 0
+
+	for _, pid := range j.probeIDs {
+		probe := j.set.ByID[pid]
+		arms := map[string]*pyjson.Object{}
+		reported := j.cfg.Model
+		for _, arm := range []struct{ name, prompt string }{{"arm_A", probe.PromptEN}, {"arm_B", probe.PromptIG}} {
+			comp, err := j.client.Complete(ctx, j.cfg.Model, arm.prompt)
+			if err != nil {
+				fmt.Fprintf(out, "  FAIL %s %s: %s\n", pid, arm.name, provider.Detail(err, j.secrets))
+				arms = nil
+				break
+			}
+			reported = comp.ReportedModel
+			rawPath := pyJoin(rawDir, fmt.Sprintf("%s_%s_%s_%s_%s.json", today, j.cfg.Provider, modelSlug, pid, arm.name))
+			record := pyjson.NewObject().
+				Set("date_utc", isoformatUTC(j.now())).
+				Set("provider", j.cfg.Provider).
+				Set("endpoint", j.endpoint).
+				Set("requested_model", j.cfg.Model).
+				Set("reported_model", reported).
+				Set("probe_id", pid).
+				Set("arm", arm.name).
+				Set("prompt", arm.prompt).
+				Set("response_text", comp.Text).
+				Set("raw_api_response", comp.Raw)
+			data, err := pyjson.MarshalIndent(record, 2)
+			if err == nil {
+				err = writeFileAtomic(filepath.FromSlash(rawPath), data)
+			}
+			if err != nil {
+				fmt.Fprintf(out, "\nERROR: could not write %s: %v\n", rawPath, err)
+				return 1
+			}
+			lang := langid.Detect(comp.Text)
+			arms[arm.name] = pyjson.NewObject().
+				Set("output_language", lang).
+				Set("epistemic_frame", "pending_human_score").
+				Set("anchor_source", "pending_human_score").
+				Set("notes", langid.FactualNotes(comp.Text, rawPath))
+			fmt.Fprintf(out, "  ok %s %s: output_language=%s\n", pid, arm.name, lang)
+		}
+		if arms == nil {
+			failures++
+			continue
+		}
+		rows = append(rows, pyjson.NewObject().
+			Set("run_id", fmt.Sprintf("run-%s-%s-%s-%s", today, j.cfg.Provider, modelSlug, pid)).
+			Set("date", today).
+			Set("provider", j.cfg.Provider).
+			Set("model", reported).
+			Set("interface", "API").
+			Set("probe_id", pid).
+			Set("arm_A", arms["arm_A"]).
+			Set("arm_B", arms["arm_B"]).
+			Set("register_delta", "pending_human_score").
+			Set("reading", "pending_human_score").
+			Set("cultural_correctness", "pending_native_review").
+			Set("evidence", fmt.Sprintf("%s/%s_%s_%s_%s_*.json (local archive, not committed)",
+				rawDir, today, j.cfg.Provider, modelSlug, pid)))
+	}
+
+	if len(rows) > 0 {
+		if err := appendRows(j.cfg.Out, rows); err != nil {
+			fmt.Fprintf(out, "\nERROR: could not append rows to %s: %v\n", j.cfg.Out, err)
+			return 1
+		}
+	}
+	summary := fmt.Sprintf("\nAppended %d row(s) to %s", len(rows), j.cfg.Out)
+	if failures > 0 {
+		summary += fmt.Sprintf("; %d probe(s) failed.", failures)
+	} else {
+		summary += "."
+	}
+	fmt.Fprintln(out, summary)
+	if len(rows) > 0 {
+		fmt.Fprintln(out, "Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).")
+	}
+	if failures > 0 {
+		return 2
+	}
+	return 0
+}
+
+// appendRows appends one JSON line per row, creating the file if needed.
+// The parent directory must exist, as with Python's open(path, "a").
+func appendRows(path string, rows []pyjson.Value) error {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	for _, row := range rows {
+		line, err := pyjson.Marshal(row)
+		if err != nil {
+			f.Close()
+			return err
+		}
+		if _, err := f.Write(append(line, '\n')); err != nil {
+			f.Close()
+			return err
+		}
+	}
+	return f.Close()
 }
 
 func loadProbes(ctx context.Context, path string, o Options) (*probes.Set, error) {

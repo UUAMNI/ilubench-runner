@@ -33,9 +33,9 @@ import (
 	"github.com/UUAMNI/ilubench-runner/internal/run"
 )
 
-// milestone gates which scenarios must pass. Milestone 3 (probe execution)
-// raises it to 3.
-const milestone = 2
+// milestone gates which scenarios must pass; every scenario is at or below
+// 3 now that probe execution is implemented.
+const milestone = 3
 
 type scenario struct {
 	Name      string            `json:"name"`
@@ -107,6 +107,8 @@ func TestGoldens(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := startMock(t, python, root)
+	// The harness captured with TZ=UTC; runner.py's `today` is the local date.
+	time.Local = time.UTC
 	for _, sc := range scenarios {
 		if sc.Milestone > milestone {
 			continue
