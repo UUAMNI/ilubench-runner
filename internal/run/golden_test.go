@@ -14,6 +14,7 @@ package run_test
 // covers the same non-shim scenarios through the built binary.
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -151,7 +152,7 @@ func runScenario(t *testing.T, root string, m *mock, sc scenario) {
 	}
 	m.takeLog(t)
 	today := time.Now().UTC().Format("2006-01-02")
-	code := run.Main(args, opts)
+	code := run.Main(context.Background(), args, opts)
 	requests := m.takeLog(t)
 
 	dateUTC := regexp.MustCompile(`"date_utc": "[^"]+"`)

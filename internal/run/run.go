@@ -97,15 +97,22 @@ var displayEndpoint = map[string]string{
 	"google":    provider.GoogleRoot,
 }
 
-// Main runs the command line and returns the process exit code.
-func Main(args []string, o Options) int {
+// ExitInterrupted is the exit code after Ctrl-C (SIGINT) or SIGTERM: the
+// conventional 128 + signal number for SIGINT, which is also what a shell
+// reports for runner.py's uncaught KeyboardInterrupt.
+const ExitInterrupted = 130
+
+// Main runs the command line and returns the process exit code. Cancelling
+// ctx (main wires it to SIGINT and SIGTERM) aborts the in-flight request and
+// returns ExitInterrupted with a one-line notice on stderr; nothing is
+// appended to --out, and archives already written stay.
+func Main(ctx context.Context, args []string, o Options) int {
 	o.fill()
 	out := o.Stdout
 	cfg, code, done := cli.Parse(args, o.Stdout, o.Stderr)
 	if done {
 		return code
 	}
-	ctx := context.Background()
 
 	entry := providerTable[cfg.Provider]
 	baseURL := cfg.BaseURL
@@ -121,6 +128,9 @@ func Main(args []string, o Options) int {
 
 	set, err := loadProbes(ctx, cfg.ProbeSet, o)
 	if err != nil {
+		if ctx.Err() != nil {
+			return interrupted(o.Stderr, "while fetching the probe set")
+		}
 		var pe *probes.Error
 		if !errors.As(err, &pe) {
 			pe = &probes.Error{Kind: probes.KindFetch, Msg: err.Error()}
@@ -204,6 +214,9 @@ func Main(args []string, o Options) int {
 	if cfg.Model == "" {
 		ids, err := client.ListModels(ctx)
 		if err != nil {
+			if ctx.Err() != nil {
+				return interrupted(o.Stderr, "while listing models")
+			}
 			fmt.Fprintf(out, "\nERROR: could not list models: %s\n", provider.Detail(err, secrets))
 			return 1
 		}
@@ -216,15 +229,23 @@ func Main(args []string, o Options) int {
 		return 1
 	}
 
-	j := &job{cfg: cfg, out: out, endpoint: endpoint, set: set, probeIDs: probeIDs,
+	j := &job{cfg: cfg, out: out, errOut: o.Stderr, endpoint: endpoint, set: set, probeIDs: probeIDs,
 		client: client, secrets: secrets, now: o.Now}
 	return j.execute(ctx)
+}
+
+// interrupted reports a cancelled run on stderr and returns ExitInterrupted.
+// stdout is left as it was so a pipeline reading it sees only real results.
+func interrupted(w io.Writer, when string) int {
+	fmt.Fprintf(w, "\nInterrupted %s. Nothing was appended to the rows file; raw archives already written remain.\n", when)
+	return ExitInterrupted
 }
 
 // job is one non-dry run once the plan has printed and the client exists.
 type job struct {
 	cfg      *cli.Config
 	out      io.Writer
+	errOut   io.Writer
 	endpoint string // what is printed and archived, never the test override
 	set      *probes.Set
 	probeIDs []string
@@ -263,6 +284,9 @@ func (j *job) execute(ctx context.Context) int {
 		for _, arm := range []struct{ name, prompt string }{{"arm_A", probe.PromptEN}, {"arm_B", probe.PromptIG}} {
 			comp, err := j.client.Complete(ctx, j.cfg.Model, arm.prompt)
 			if err != nil {
+				if ctx.Err() != nil {
+					return interrupted(j.errOut, fmt.Sprintf("during %s %s after %d completed probe(s)", pid, arm.name, len(rows)))
+				}
 				fmt.Fprintf(out, "  FAIL %s %s: %s\n", pid, arm.name, provider.Detail(err, j.secrets))
 				arms = nil
 				break

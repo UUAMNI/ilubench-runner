@@ -124,7 +124,7 @@ characterization scenarios captured from Python.
   Python's exception repr.
 - Paths that Python would crash on with a traceback (missing `--out`
   directory, non-string provider content) produce an `ERROR:` line, exit 1.
-- Ctrl-C exits 130 without a traceback and never leaves a partial raw file.
+- Ctrl-C exits 130 with a one-line notice on stderr instead of a traceback, and never leaves a partial raw file.
 - `User-Agent` is `ilubench/<version>` instead of `Python-urllib/3.x`.
 - Request bodies are compact JSON; Python sends spaced JSON. Semantically
   identical.
@@ -359,3 +359,40 @@ directory, missing `--out` directory) print an `ERROR:` line and exit 1
 instead of a traceback; the side effects before the failure are identical.
 The `"content"` on the OpenAI dialect must be a string or null; Python would
 carry a list through and crash later.
+
+---
+
+## Milestone 4 (2026-09-03): the approved Go-specific improvements
+
+**Context first, as a parameter.** `run.Main(ctx, args, opts)` takes a
+`context.Context` as its first argument, the Go convention, and passes it to
+every HTTP request. `main` creates it with `signal.NotifyContext` for SIGINT
+and SIGTERM. Nothing else in the program knows about signals; it only knows
+that a context can end.
+
+**Cancellation is checked at the boundary, not everywhere.** After any
+request fails, the code asks `ctx.Err()` before deciding what the failure
+means. A cancelled context becomes a one-line notice on stderr and exit code
+130 (128 plus SIGINT's number, which is also what a shell reports for
+runner.py's uncaught KeyboardInterrupt); anything else is reported as the
+Python runner would. No FAIL line is printed for an abandoned request, and
+nothing is appended to the rows file, so a pipeline reading stdout sees only
+real results.
+
+**Second Ctrl-C kills at once.** `signal.NotifyContext` keeps capturing the
+signal after the first delivery, so a goroutine waits for the context to end
+and then calls `stop()`, restoring the default handler. The first Ctrl-C is
+graceful; the second is immediate. Three lines, worth knowing.
+
+**Testing cancellation needs a server that notices.** The interrupt test
+blocks a handler until the client goes away. Go's server only watches the
+connection for that once the request body has been consumed, so a handler
+that never reads the body never sees the disconnect and the test hung for
+the full timeout. Reading the body first (and bounding the wait) fixed it,
+and the test now proves the in-flight request is abandoned in well under a
+second.
+
+**The rest of Milestone 4 had already landed.** Response-header timeout
+(4b) and the `ilubench/<version>` User-Agent (4c) were part of the HTTP
+layer in Milestone 2; atomic archive writes (the file half of 4a) in
+Milestone 3. Concurrency (4d) and retries (4e) stay out of v1 as agreed.
