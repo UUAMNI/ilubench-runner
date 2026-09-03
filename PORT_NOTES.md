@@ -396,3 +396,46 @@ second.
 (4b) and the `ilubench/<version>` User-Agent (4c) were part of the HTTP
 layer in Milestone 2; atomic archive writes (the file half of 4a) in
 Milestone 3. Concurrency (4d) and retries (4e) stay out of v1 as agreed.
+
+---
+
+## Milestone 5 (2026-09-03): real-key parity tooling
+
+**Shadow runs isolate by working directory, not by flags.** `shadow.sh`
+runs each implementation in its own subdirectory, so the default `--out`
+and `--raw-dir` apply and every relative path inside the rows (`runs_raw/...`)
+is identical between the two. Passing different `--raw-dir` values would
+have made the notes and evidence strings differ by construction and needed
+masking; changing the working directory needs nothing.
+
+**Compare what the model cannot change; cross-check what it can.** A real
+model answers differently each time, so rows are not diffed byte for byte.
+The comparer checks every field that is fixed by the protocol (identifiers,
+dates, stamps, key order, archive names, prompts, wire endpoint) exactly,
+and treats the one derived field, `output_language`, as a differential
+test: both heuristics run over every real response either implementation
+archived, and must agree, and the row must carry what its own heuristic
+computes. A disagreement there is the finding the shadow week exists to
+produce.
+
+**The Go heuristic is reachable from Python through a tiny program.**
+`parity/langidcheck` is a `main` package that reads JSON lines and calls
+`langid.Detect` and `langid.FactualNotes`. It is the only way for a Python
+script to run Go code without cgo, and it keeps the shipped binary free of
+test-only subcommands. `go run` builds it on demand; the self-test builds it
+once and points the comparer at the binary.
+
+**The tooling has its own test.** `shadow_selftest.sh` runs the shadow flow
+three times against the parity mock (clean, failing arm, model listing),
+expects PASS, then corrupts one row and expects FAIL. It runs in CI. Tooling
+that has never been seen to fail cannot be trusted to detect anything.
+
+**Response-dependent differences are notes, not failures.** Which arm
+scored `mixed`, which optional keys a provider included, request ids in
+error bodies: all vary run to run with real models and are printed as NOTE
+lines so they are visible without blocking the verdict.
+
+**What this milestone could not do here.** The sandbox has no API keys and
+no route to HuggingFace or api.openai.com, so no real provider has been
+exercised yet. `parity/SHADOW_WEEK.md` is the checklist for doing that on
+your machine; the port's claim to production stands or falls on it.

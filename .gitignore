@@ -23,3 +23,6 @@ __pycache__/
 
 # Local build output
 /bin/
+
+# Shadow-week evidence (parity/shadow.sh); kept locally, never committed
+/shadow/

@@ -34,3 +34,5 @@ jobs:
         run: go build -o bin/ilubench ./cmd/ilubench
       - name: Parity goldens through the built binary
         run: python3 parity/harness.py check --impl go --bin ./bin/ilubench --milestone 3
+      - name: Shadow tooling self-test (Milestone 5)
+        run: bash parity/shadow_selftest.sh ./bin/ilubench

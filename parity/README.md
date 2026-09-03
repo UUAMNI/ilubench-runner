@@ -18,6 +18,11 @@ python3 parity/harness.py export           # refresh goldens/scenarios.json for 
 | `py_shim.py` | Runs `runner.py` unmodified with its three hardcoded hosts redirected to the mock. Only needed for the Anthropic/Google/HuggingFace paths; `--base-url` scenarios run `runner.py` directly. |
 | `scenarios.py` | The 40 scenarios, each mapped to a row of `PORT_PLAN.md` section A5. |
 | `harness.py` | Runs scenarios in scrubbed temp directories, masks volatile values, stores and diffs goldens. |
+| `shadow.sh` | Milestone 5: runs the Go binary and `runner.py` with identical arguments against a real provider, each in its own directory, then compares. See `SHADOW_WEEK.md`. |
+| `shadow_compare.py` | The comparison behind `shadow.sh`: exact on everything the protocol fixes, and a cross-check of both `output_language` implementations over every real response either side archived. |
+| `shadow_selftest.sh` | Proves the shadow tooling against the mock (three PASS runs, one deliberately corrupted FAIL). Runs in CI. |
+| `langidcheck/` | Small Go program that exposes `langid.Detect` and `FactualNotes` to `shadow_compare.py`. |
+| `SHADOW_WEEK.md` | The checklist for the week of real-key shadow runs before cutover. |
 | `probes/` | Probe files for edge cases: failure directives, duplicate ids, bad JSON, missing fields, blank file. |
 | `goldens/<scenario>/` | `exit_code.txt`, `stdout.txt`, `stderr.txt`, `requests.txt` (wire log), `files.txt`, and `tree/` (every file the run wrote, path flattened with `__`). `MANIFEST.txt` records the Python version and the `runner.py` hash the goldens came from. |
 

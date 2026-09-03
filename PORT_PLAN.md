@@ -1,6 +1,6 @@
 # PORT_PLAN.md — ilubench-runner, Python → Go
 
-Status: **approved 2026-09-03. Milestones 0 through 4 complete; Milestone 5 (real-key parity tooling, on your machine) next.** `runner.py` is untouched and
+Status: **approved 2026-09-03. Milestones 0 through 5 complete. The shadow week (`parity/SHADOW_WEEK.md`) runs on your machine; Milestone 6 (cutover) follows it.** `runner.py` is untouched and
 stays runnable until the cutover in Milestone 6 is verified.
 
 This document has two parts. Part A is the Phase 1 assessment (what the runner
@@ -314,9 +314,10 @@ entry point is the command you type, so cutover is one command changing.
 1. **Install.** `go install github.com/UUAMNI/ilubench-runner/cmd/ilubench@<tag>`
    or a release binary from GitHub Actions (linux/darwin, amd64/arm64).
 2. **Shadow week (7 calendar days, on your machine).** Every real run is done
-   twice with identical arguments: `ilubench … --out runs.jsonl --raw-dir
-   runs_raw` and `python runner.py … --out runs.shadow.jsonl --raw-dir
-   runs_raw_py`. Minimum coverage before the week counts: one run per dialect
+   twice with identical arguments through `parity/shadow.sh -- <args>`, which
+   runs the Go binary and `runner.py` in side-by-side directories and
+   compares them (`parity/SHADOW_WEEK.md` has the checklist and commands).
+   Minimum coverage before the week counts: one run per dialect
    (anthropic, google, openai or moonshot), one OpenRouter or local
    `--base-url` run, one model-listing invocation, one deliberate failure
    (bad model id) to compare exit codes, one run without `--probe-set` (live
