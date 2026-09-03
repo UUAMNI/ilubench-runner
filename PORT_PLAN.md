@@ -326,7 +326,9 @@ entry point is the command you type, so cutover is one command changing.
    section is retitled "reference implementation"; `runner.py` stays in the
    tree. The Go rows from the shadow week are the ones committed to the
    dataset repo (they are byte-compatible with what Python would have
-   written).
+   written) and imported into Uche with
+   `scripts/ilubench_import.py --runs runs.jsonl --raw-dir runs_raw`, so
+   every internal row carries the real response text.
 4. **Rollback.** Run `python runner.py` with the same arguments. Formats are
    identical, so Python rows can be appended to a Go-written `runs.jsonl`
    and vice versa. Nothing to migrate, nothing to uninstall.
@@ -339,12 +341,16 @@ entry point is the command you type, so cutover is one command changing.
 
 1. **Which Python runner is "in real use"?** No published row came from
    `runner.py`; `run_probes.py` produced the matrix and Uche now has its own
-   executor. **Recommend:** port `runner.py` (public, superset, the one you
-   asked for); define "real use" as *the next evidence batch for the dataset
-   is produced by the Go binary with Python shadowing*, and leave Uche's
-   executor alone. If you instead want the Go binary to feed Uche directly,
-   that is a new feature (HTTP POST to `/admin/benchmark/…`), not a port, and
-   should be a milestone after cutover.
+   executor. **Decided 2026-09-03** (see `docs/ilubench-elicitation-flows.html`):
+   the Go binary is the single elicitation implementation for internal and
+   public runs; Uche scores, stores the series and publishes, taking rows in
+   through `scripts/ilubench_import.py --raw-dir`. The importer changes
+   (real arm text from the raw archive; `pending_*` is not a score) are on
+   the `claude/ilubench-import-raw-text` branch of `uuamni-uche`, and
+   `POST /admin/benchmark/run` is deprecated there until the first full
+   matrix has gone through the import path. "Real use" therefore means: the
+   next evidence batch is produced by the Go binary, with Python shadowing,
+   and imported into Uche with `--raw-dir`.
 2. **Byte-exact or semantic parity for `runs.jsonl`?** Rows are committed and
    reviewed in PRs, so whitespace shows up in diffs. **Recommend:** byte-exact,
    via `internal/pyjson`. For raw archives, byte-exact after masking
