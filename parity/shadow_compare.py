@@ -249,13 +249,9 @@ def cross_check(dirs: dict, rows: dict, archives: dict, rep: Report, langidcheck
 
 # --- main -----------------------------------------------------------------------
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("dir", help="shadow run directory containing go/ and py/")
-    ap.add_argument("--langidcheck", default=os.environ.get("ILUBENCH_LANGIDCHECK"),
-                    help="prebuilt parity/langidcheck binary (default: go run ./parity/langidcheck)")
-    args = ap.parse_args(argv)
-    base = Path(args.dir)
+def compare(base: Path, langidcheck: str | None = None):
+    """Run every check on one shadow directory. Returns (report, exit codes,
+    rows, archives) so shadow_report.py can summarize many runs."""
     dirs = {"go": base / "go", "py": base / "py"}
     for who, d in dirs.items():
         if not d.is_dir():
@@ -277,7 +273,18 @@ def main(argv=None) -> int:
     archives = {who: load_archives(d) for who, d in dirs.items()}
     compare_rows(rows["go"], rows["py"], rep)
     compare_archives(archives["go"], archives["py"], rep)
-    cross_check(dirs, rows, archives, rep, args.langidcheck)
+    cross_check(dirs, rows, archives, rep, langidcheck)
+    return rep, codes, rows, archives
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("dir", help="shadow run directory containing go/ and py/")
+    ap.add_argument("--langidcheck", default=os.environ.get("ILUBENCH_LANGIDCHECK"),
+                    help="prebuilt parity/langidcheck binary (default: go run ./parity/langidcheck)")
+    args = ap.parse_args(argv)
+    base = Path(args.dir)
+    rep, codes, rows, archives = compare(base, args.langidcheck)
 
     print(f"shadow compare: {base}")
     print(f"  exit codes      go={codes['go'] or '?'} python={codes['py'] or '?'}")
