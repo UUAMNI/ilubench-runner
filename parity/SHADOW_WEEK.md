@@ -1,5 +1,9 @@
 # The shadow week
 
+> Completed 2026-09-03/04; the report is in `docs/shadow-week-2026-09.md`.
+> Kept as the procedure for any future re-verification (a new provider, a
+> changed heuristic, a Python version bump).
+
 Milestone 5 of `PORT_PLAN.md`. Every real run during this period is done twice
 with identical arguments, Go first and then Python, and compared. This runs on
 a machine with API keys and network access; the sandbox the port was built in

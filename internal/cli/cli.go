@@ -33,14 +33,20 @@ type Config struct {
 }
 
 // Providers are the accepted --provider choices, in argparse's sorted order.
-var Providers = []string{"anthropic", "compatible", "google", "moonshot", "openai"}
+// "xai" is the one addition over runner.py (post-cutover, 2026-09-05).
+var Providers = []string{"anthropic", "compatible", "google", "moonshot", "openai", "xai"}
+
+// Version is what --version prints and what the User-Agent carries. Release
+// builds set it with
+// -ldflags "-X github.com/UUAMNI/ilubench-runner/internal/cli.Version=v1.2.3".
+var Version = "dev"
 
 const prog = "ilubench"
 
-var usageLine = "usage: " + prog + ` [-h] [--provider {anthropic,compatible,google,moonshot,openai}]
+var usageLine = "usage: " + prog + ` [-h] [--provider {anthropic,compatible,google,moonshot,openai,xai}]
                 [--model MODEL] [--base-url BASE_URL] [--api-key-env API_KEY_ENV]
                 [--probe-set PATH] [--probes ID,ID] [--out PATH] [--raw-dir DIR]
-                [--dry-run]
+                [--dry-run] [--version]
 `
 
 var helpBody = `
@@ -48,7 +54,8 @@ Run the IlùBench two-arm elicitation protocol against a model API.
 
 options:
   -h, --help            show this help message and exit
-  --provider {anthropic,compatible,google,moonshot,openai}
+  --version             print the ilubench version and exit
+  --provider {anthropic,compatible,google,moonshot,openai,xai}
                         API dialect. Inferred as 'compatible' when --base-url is set.
   --model MODEL         Model id to test — you pick; there are no defaults. Omit to
                         list the endpoint's available models and exit.
@@ -83,6 +90,8 @@ func Parse(args []string, stdout, stderr io.Writer) (cfg *Config, code int, done
 	fs.StringVar(&cfg.Out, "out", "runs.jsonl", "")
 	fs.StringVar(&cfg.RawDir, "raw-dir", "runs_raw", "")
 	fs.BoolVar(&cfg.DryRun, "dry-run", false, "")
+	var version bool
+	fs.BoolVar(&version, "version", false, "")
 
 	fail := func(msg string) (*Config, int, bool) {
 		fmt.Fprint(stderr, usageLine)
@@ -96,6 +105,10 @@ func Parse(args []string, stdout, stderr io.Writer) (cfg *Config, code int, done
 			return nil, 0, true
 		}
 		return fail(err.Error())
+	}
+	if version {
+		fmt.Fprintf(stdout, "ilubench %s\n", Version)
+		return nil, 0, true
 	}
 	if fs.NArg() > 0 {
 		return fail("unrecognized arguments: " + strings.Join(fs.Args(), " "))

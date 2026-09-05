@@ -8,22 +8,26 @@ Ask a model to explain an Igbo proverb **in English**, and it typically answers 
 
 ## Quickstart (60 seconds)
 
-Requirements: Python 3.10+. No dependencies — `runner.py` is a single stdlib-only file.
+`ilubench` is a single static binary with no runtime dependencies.
 
 ```bash
+# 1. Get the binary: download it from the Releases page, or build from source (Go 1.24+):
 git clone https://github.com/UUAMNI/ilubench-runner
 cd ilubench-runner
+go build -o bin/ilubench ./cmd/ilubench
 
-# 1. Put a key in the environment (any one of these):
-export ANTHROPIC_API_KEY=...   # or OPENAI_API_KEY / GEMINI_API_KEY / MOONSHOT_API_KEY
+# 2. Put a key in the environment (any one of these):
+export ANTHROPIC_API_KEY=...   # or OPENAI_API_KEY / GEMINI_API_KEY / MOONSHOT_API_KEY / XAI_API_KEY
 
-# 2. See the call plan without spending a cent:
-python runner.py --provider anthropic --dry-run
+# 3. See the call plan without spending a cent:
+./bin/ilubench --provider anthropic --dry-run
 
-# 3. List the models your key can reach, pick one, run:
-python runner.py --provider anthropic
-python runner.py --provider anthropic --model <model-id>
+# 4. List the models your key can reach, pick one, run:
+./bin/ilubench --provider anthropic
+./bin/ilubench --provider anthropic --model <model-id>
 ```
+
+`go install github.com/UUAMNI/ilubench-runner/cmd/ilubench@latest` also works once Go is installed, and puts `ilubench` on your PATH.
 
 A full run over the published probe set is 2 API calls per probe. Structured rows append to `runs.jsonl`; complete raw API responses are archived under `runs_raw/` (git-ignored, local evidence only).
 
@@ -32,8 +36,8 @@ A full run over the published probe set is 2 API calls per probe. Structured row
 **Any OpenAI-compatible endpoint works** — OpenRouter, Moonshot, a local vLLM server — which means you can run IlùBench on open-weight models:
 
 ```bash
-python runner.py --base-url https://openrouter.ai/api/v1 --api-key-env OPENROUTER_API_KEY --model <model-id>
-python runner.py --base-url http://localhost:8000/v1 --model <model-id>   # local vLLM; no key needed
+ilubench --base-url https://openrouter.ai/api/v1 --api-key-env OPENROUTER_API_KEY --model <model-id>
+ilubench --base-url http://localhost:8000/v1 --model <model-id>   # local vLLM; no key needed
 ```
 
 | `--provider` | Endpoint | Key env var (override with `--api-key-env`) |
@@ -42,11 +46,22 @@ python runner.py --base-url http://localhost:8000/v1 --model <model-id>   # loca
 | `openai` | api.openai.com | `OPENAI_API_KEY` |
 | `google` | generativelanguage.googleapis.com | `GEMINI_API_KEY` |
 | `moonshot` | api.moonshot.ai | `MOONSHOT_API_KEY` |
+| `xai` | api.x.ai | `XAI_API_KEY` |
 | `compatible` | your `--base-url` | `OPENAI_API_KEY` |
 
 The probe set is fetched from the [dataset on HuggingFace](https://huggingface.co/datasets/UUAMNI/ilubench) at run time, so you always test against the current published probes. Offline, or want to inspect first? `--probe-set examples/sample_probes.jsonl` runs a 2-probe sample that ships with this repo. `--probes ilu-001,ilu-003` selects specific probes.
 
-Keys are read from environment variables only, are never printed, and are never written to any output file.
+Keys are read from environment variables only, are never printed, and are never written to any output file. Ctrl-C stops cleanly: the in-flight request is abandoned, nothing is appended to `runs.jsonl`, and archives already written stay.
+
+### The Python reference implementation
+
+`runner.py` is the original, single-file, stdlib-only implementation (Python 3.10+). It takes exactly the same arguments and writes byte-identical rows and archives; the Go binary was ported from it and is held to it by a characterization suite (`parity/`) and by a week of side-by-side runs against real providers. It stays in the repository as the reference and as the rollback: `python runner.py <same arguments>` produces the same files.
+
+```bash
+python runner.py --provider anthropic --model <model-id>
+```
+
+The one difference in scope is `--provider xai`, which the Go binary added after the port; with `runner.py`, reach xAI with `--base-url https://api.x.ai/v1 --api-key-env XAI_API_KEY`.
 
 ## The human-scoring boundary
 
@@ -102,6 +117,17 @@ If you change any of these, your rows are not comparable to published IlùBench 
 4. Both arms of every probe, verbatim — `prompt_en` is arm A, `prompt_ig` is arm B. Never paraphrase a probe.
 5. Record the exact model id the API reports, plus the date — register behavior shifts across model versions.
 
+## Development
+
+```bash
+go test ./...                                            # unit, differential (needs python3) and golden tests
+go build -o bin/ilubench ./cmd/ilubench
+python3 parity/harness.py check --impl go --bin ./bin/ilubench   # the Go binary against the Python goldens
+bash parity/shadow_selftest.sh                           # the real-provider shadow tooling, against a mock
+```
+
+`PORT_PLAN.md` records how the port was done and verified, `PORT_NOTES.md` explains every Go design decision, and `parity/` holds the characterization suite and the shadow-run tooling.
+
 ## Contributing
 
 **Run it on a model we haven't tested and open a PR with your rows.** That is the most useful contribution right now: does register switching hold on open-weight models, smaller models, other providers?
@@ -120,7 +146,7 @@ Replications in other languages (Yorùbá, Hausa, Swahili, Arabic, Mandarin...) 
 
 ## License
 
-- **Code** (`runner.py`, this repo): [MIT](LICENSE).
+- **Code** (`cmd/`, `internal/`, `runner.py`, this repo): [MIT](LICENSE).
 - **Probe data** (the published probe set fetched from HuggingFace, and `examples/sample_probes.jsonl`): [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) — attribute **IlùBench, UUAMNI (Chuma B. Chukwu Jr.), https://huggingface.co/datasets/UUAMNI/ilubench**.
 
 ```bibtex

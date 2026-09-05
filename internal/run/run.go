@@ -28,10 +28,6 @@ import (
 	"github.com/UUAMNI/ilubench-runner/internal/pystr"
 )
 
-// Version is stamped into the User-Agent. Release builds override it with
-// -ldflags "-X .../internal/run.Version=v1.2.3".
-var Version = "dev"
-
 // ProbeSetURL is the published probe set, fetched when --probe-set is absent.
 const ProbeSetURL = "https://huggingface.co/datasets/UUAMNI/ilubench/resolve/main/probe_set_v0.jsonl"
 
@@ -87,6 +83,7 @@ var providerTable = map[string]struct{ keyEnv, baseURL string }{
 	"openai":     {"OPENAI_API_KEY", "https://api.openai.com/v1"},
 	"google":     {"GEMINI_API_KEY", ""},
 	"moonshot":   {"MOONSHOT_API_KEY", "https://api.moonshot.ai/v1"},
+	"xai":        {"XAI_API_KEY", "https://api.x.ai/v1"}, // OpenAI dialect; not in runner.py
 	"compatible": {"OPENAI_API_KEY", ""},
 }
 
@@ -395,7 +392,7 @@ func loadProbes(ctx context.Context, path string, o Options) (*probes.Set, error
 
 func newClient(name, baseURL, key string, o Options) *provider.Client {
 	c := &provider.Client{Dialect: provider.OpenAI, Root: baseURL, Key: key, HTTP: o.HTTP,
-		UserAgent: "ilubench/" + Version}
+		UserAgent: "ilubench/" + cli.Version}
 	switch name {
 	case "anthropic":
 		c.Dialect, c.Root = provider.Anthropic, o.AnthropicRoot

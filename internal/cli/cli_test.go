@@ -18,7 +18,7 @@ func TestParse(t *testing.T) {
 		{name: "no args", args: nil, wantCode: 2, wantDone: true,
 			wantErr: "--provider is required (or pass --base-url for an OpenAI-compatible endpoint)"},
 		{name: "bad choice", args: []string{"--provider", "foo"}, wantCode: 2, wantDone: true,
-			wantErr: "argument --provider: invalid choice: 'foo' (choose from 'anthropic', 'compatible', 'google', 'moonshot', 'openai')"},
+			wantErr: "argument --provider: invalid choice: 'foo' (choose from 'anthropic', 'compatible', 'google', 'moonshot', 'openai', 'xai')"},
 		{name: "bad choice wins over inference", args: []string{"--provider", "foo", "--base-url", "http://x"},
 			wantCode: 2, wantDone: true, wantErr: "invalid choice"},
 		{name: "compatible without base-url", args: []string{"--provider", "compatible"}, wantCode: 2,
@@ -28,6 +28,13 @@ func TestParse(t *testing.T) {
 		{name: "positional", args: []string{"--provider", "openai", "stray"}, wantCode: 2, wantDone: true,
 			wantErr: "unrecognized arguments: stray"},
 		{name: "help", args: []string{"-h"}, wantCode: 0, wantDone: true},
+		{name: "version", args: []string{"--version"}, wantCode: 0, wantDone: true},
+		{name: "xai is a provider", args: []string{"--provider", "xai"},
+			check: func(t *testing.T, c *Config) {
+				if c.Provider != "xai" {
+					t.Errorf("got %+v", c)
+				}
+			}},
 		{name: "inferred compatible", args: []string{"--base-url", "http://localhost:8000/v1/"},
 			check: func(t *testing.T, c *Config) {
 				if c.Provider != "compatible" || c.BaseURL != "http://localhost:8000/v1/" {
@@ -54,8 +61,8 @@ func TestParse(t *testing.T) {
 			if tc.wantErr != "" && !strings.Contains(errb.String(), tc.wantErr) {
 				t.Errorf("stderr %q lacks %q", errb.String(), tc.wantErr)
 			}
-			if done && code == 0 && !strings.HasPrefix(out.String(), "usage: ilubench") {
-				t.Errorf("help should go to stdout, got %q", out.String())
+			if done && code == 0 && !strings.HasPrefix(out.String(), "usage: ilubench") && !strings.HasPrefix(out.String(), "ilubench dev") {
+				t.Errorf("help/version should go to stdout, got %q", out.String())
 			}
 			if done && code == 2 && out.Len() != 0 {
 				t.Errorf("usage errors must not write stdout, got %q", out.String())

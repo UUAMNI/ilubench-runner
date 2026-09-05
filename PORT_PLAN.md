@@ -1,6 +1,6 @@
 # PORT_PLAN.md — ilubench-runner, Python → Go
 
-Status: **approved 2026-09-03. Milestones 0 through 5 complete. The shadow week (`parity/SHADOW_WEEK.md`) runs on your machine; Milestone 6 (cutover) follows it.** `runner.py` is untouched and
+Status: **complete. Milestones 0 through 6 done; shadow week passed (`docs/shadow-week-2026-09.md`); cutover committed 2026-09-05. Post-cutover: `--provider xai` landed; Uche importer change awaits merge; retirement of `runner.py` as the default is done, deletion is not planned.** `runner.py` is untouched and
 stays runnable until the cutover in Milestone 6 is verified.
 
 This document has two parts. Part A is the Phase 1 assessment (what the runner
@@ -334,7 +334,7 @@ entry point is the command you type, so cutover is one command changing.
    identical, so Python rows can be appended to a Go-written `runs.jsonl`
    and vice versa. Nothing to migrate, nothing to uninstall.
 5. **Retirement.** After the shadow week *and* one full real batch committed
-   from Go output, Python is frozen: README marks it legacy and CI stops
+   from Go output (the shadow week's Go rows qualify), Python is frozen: README marks it legacy and CI stops
    running the Python side of the parity suite by default (it stays runnable
    with one flag). Deleting `runner.py` is a separate decision for you, later.
 

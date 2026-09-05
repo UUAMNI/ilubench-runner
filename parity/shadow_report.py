@@ -25,7 +25,7 @@ sys.path.insert(0, str(HERE))
 from shadow_compare import compare  # noqa: E402
 
 DIALECT = {"anthropic": "anthropic", "google": "google", "openai": "openai",
-           "moonshot": "openai", "compatible": "compatible"}
+           "moonshot": "openai", "xai": "openai", "compatible": "compatible"}
 
 
 def parse_args_txt(path: Path) -> dict:

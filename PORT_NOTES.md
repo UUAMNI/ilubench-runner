@@ -128,6 +128,8 @@ characterization scenarios captured from Python.
 - `User-Agent` is `ilubench/<version>` instead of `Python-urllib/3.x`.
 - Request bodies are compact JSON; Python sends spaced JSON. Semantically
   identical.
+- `--version` exists; `--provider xai` exists (post-cutover). Neither is in
+  `runner.py`.
 
 ---
 
@@ -439,3 +441,45 @@ lines so they are visible without blocking the verdict.
 no route to HuggingFace or api.openai.com, so no real provider has been
 exercised yet. `parity/SHADOW_WEEK.md` is the checklist for doing that on
 your machine; the port's claim to production stands or falls on it.
+
+---
+
+## Milestone 6 (2026-09-05): cutover
+
+**The shadow week is the evidence, and it is in the tree.**
+`docs/shadow-week-2026-09.md` is the report verbatim: 16 runs, four models,
+two days, every verdict PASS, 84 real responses cross-checked through both
+heuristics with no disagreement. The raw archives stay local by design; the
+report has no response text and no keys, so it can be committed.
+
+**Cutover is a README change, not a code change.** The binary was already
+byte-equivalent; what changes is which command the quickstart teaches.
+`runner.py` stays as the reference implementation and the rollback, and
+the parity suite keeps holding the two together in CI.
+
+**`--version` is the first flag Python never had.** A binary you distribute
+has to identify itself, and the value is also the User-Agent's version
+segment, so `cli.Version` is a single variable set by `-ldflags -X` at
+release time. That is the standard Go way to stamp a build without a
+generated file. The goldens skip help text, so adding a flag costs nothing
+in parity.
+
+**Releases are built by CI from a tag, with CGO disabled.** `CGO_ENABLED=0`
+makes the binary fully static, which is what lets one file run on any
+Linux or macOS of the right architecture; `-trimpath -s -w` drops build
+paths and debug tables so the artifact is small and reproducible.
+
+## Post-cutover 1 (2026-09-05): `--provider xai`
+
+**One table row.** Providers live in a map from name to key variable and
+base URL, and xAI speaks the OpenAI dialect, so adding it is one entry
+there and one in the `--provider` choice list. Rows now say `"provider":
+"xai"`, matching the five published Grok rows, where the shadow week's
+`--base-url` runs had said `compatible`.
+
+**This is the first deliberate divergence from `runner.py`.** It was held
+until after cutover so the shadow week compared like with like. Python
+users reach xAI with `--base-url https://api.x.ai/v1 --api-key-env
+XAI_API_KEY`, which the README documents; the parity goldens are
+unaffected because no scenario uses the new name and usage text is not
+compared.
