@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IlùBench Elicitation Flows</title>
+<!-- Decision brief prepared 2026-09-03 for the IlùBench Go port; source of record for the elicitation-flow proposal approved the same day. Also published at https://claude.ai/code/artifact/5ca07a24-a62a-4fd2-8097-bb3004e998b0 -->
+</head>
+<body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #F4F1E8;
+    --surface: #FFFFFF;
+    --ink: #0A2E1F;
+    --ink-72: rgba(10,46,31,.72);
+    --muted: rgba(10,46,31,.55);
+    --faint: rgba(10,46,31,.30);
+    --hair: rgba(10,46,31,.14);
+    --edge: rgba(10,46,31,.34);
+    --accent: #2D8653;
+    --gold: #B8902F;
+    --gold-soft: rgba(184,144,47,.14);
+    --emerald-soft: rgba(45,134,83,.10);
+    --font-display: 'Newsreader', Georgia, serif;
+    --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0A2E1F;
+      --surface: #10382A;
+      --ink: rgba(244,241,232,.92);
+      --ink-72: rgba(244,241,232,.78);
+      --muted: rgba(244,241,232,.60);
+      --faint: rgba(244,241,232,.36);
+      --hair: rgba(244,241,232,.16);
+      --edge: rgba(244,241,232,.45);
+      --accent: #4CB47A;
+      --gold: #C9A84C;
+      --gold-soft: rgba(201,168,76,.16);
+      --emerald-soft: rgba(76,180,122,.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0A2E1F;
+    --surface: #10382A;
+    --ink: rgba(244,241,232,.92);
+    --ink-72: rgba(244,241,232,.78);
+    --muted: rgba(244,241,232,.60);
+    --faint: rgba(244,241,232,.36);
+    --hair: rgba(244,241,232,.16);
+    --edge: rgba(244,241,232,.45);
+    --accent: #4CB47A;
+    --gold: #C9A84C;
+    --gold-soft: rgba(201,168,76,.16);
+    --emerald-soft: rgba(76,180,122,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  ::selection { background: rgba(201,168,76,.3); }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 2.5rem; }
+  header.masthead { padding: 3.5rem 0 2.5rem; border-bottom: 1px solid var(--hair); }
+  .eyebrow {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: .28em;
+    font-size: .78rem;
+    color: var(--gold);
+    margin: 0 0 1rem;
+  }
+  .eyebrow-i { color: var(--faint); }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+    letter-spacing: -.02em;
+    line-height: 1.08;
+    margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+  .lead { font-size: 1.15rem; color: var(--muted); max-width: 62ch; margin: 0; }
+  section { padding: 4rem 0 3.5rem; border-bottom: 1px solid var(--hair); }
+  section:last-of-type { border-bottom: 0; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.9rem;
+    letter-spacing: -.015em;
+    line-height: 1.15;
+    margin: 0 0 .75rem;
+    text-wrap: balance;
+  }
+  p { max-width: 68ch; color: var(--ink-72); margin: 0 0 1rem; }
+  figure { margin: 2rem 0 1.5rem; }
+  .fig-wrap { overflow-x: auto; }
+  figure svg {
+    display: block;
+    width: 100%;
+    min-width: 760px;
+    height: auto;
+    color: var(--ink);
+    font-family: var(--font-body);
+  }
+  figcaption { font-size: .95rem; color: var(--muted); max-width: 72ch; margin-top: .9rem; }
+  figcaption strong { color: var(--ink); font-weight: 600; }
+
+  /* --- diagram grammar (shared by all three figures) --- */
+  .lane { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; fill: var(--muted); }
+  .n rect { fill: var(--surface); stroke: var(--edge); stroke-width: 1; }
+  .n.el rect { stroke: var(--accent); stroke-width: 2; fill: var(--surface); }
+  .n.el .t { fill: var(--accent); }
+  .n.chg rect { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 5 3; fill: var(--gold-soft); }
+  .n.off { opacity: .5; }
+  .n .t { font-size: 12.5px; font-weight: 600; fill: currentColor; }
+  .n .s { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
+  .e { stroke: var(--edge); stroke-width: 1.3; fill: none; }
+  .e.d { stroke-dasharray: 5 4; }
+  .lbl { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
+  .brace { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+  .brace-t { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; fill: var(--gold); }
+  .strike { stroke: currentColor; stroke-width: 1.2; opacity: .6; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1.5rem;
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); margin-top: .5rem;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: .5rem; }
+  .sw { display: inline-block; width: 22px; height: 12px; border-radius: 2px; background: var(--surface); }
+  .sw.el { border: 2px solid var(--accent); }
+  .sw.chg { border: 1.5px dashed var(--gold); background: var(--gold-soft); }
+  .sw.off { border: 1px solid var(--edge); opacity: .5; }
+  .sw.d { height: 0; border-top: 1.5px dashed var(--edge); background: none; }
+
+  /* --- comparison table --- */
+  .table-wrap { overflow-x: auto; margin-top: 1.5rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: .95rem; }
+  th, td { text-align: left; vertical-align: top; padding: .85rem 1rem .85rem 0; border-bottom: 1px solid var(--hair); }
+  th { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--edge); }
+  td:first-child { color: var(--ink); font-weight: 600; width: 22%; }
+  td { color: var(--ink-72); }
+  td.win { color: var(--accent); font-weight: 600; }
+  th.lean { color: var(--accent); }
+
+  .ask {
+    margin-top: 2rem;
+    padding: 1.75rem;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-top: 2px solid var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .ask p:last-child { margin-bottom: 0; }
+  .ask .card-title { font-family: var(--font-display); font-weight: 500; font-size: 1.3rem; margin: 0 0 .5rem; color: var(--ink); }
+  footer { padding: 2.5rem 0 3.5rem; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  code { font-family: var(--font-mono); font-size: .88em; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="container">
+  <header class="masthead">
+    <p class="eyebrow"><span class="eyebrow-i">00 / </span>Decision brief</p>
+    <h1>IlùBench Elicitation Flows</h1>
+    <p class="lead">How a benchmark run gets from a model API into Uche's leaderboard today, how it would flow with the Go binary as the only elicitation code, and how it would flow after the port if nothing else changes. One figure per option, same grid, so the difference is where the boxes moved.</p>
+  </header>
+
+  <section>
+    <p class="eyebrow"><span class="eyebrow-i">01 / </span>Today</p>
+    <h2>Two elicitation implementations, joined by hand</h2>
+    <p>Inside Uche you call the run endpoint and <code>services/benchmark.py</code> makes the two calls per probe and inserts response text into <code>benchmark_runs</code>. Outside, a researcher runs <code>runner.py</code>, which writes rows and a raw archive; those rows reach Uche only through a pull request to the dataset repo and a manual import.</p>
+    <figure>
+      <div class="fig-wrap">
+      <svg viewBox="0 0 1010 560" role="img" aria-label="Today: Uche's services/benchmark.py and the public runner.py are two separate elicitation implementations; only the internal one writes to benchmark_runs directly, and public rows reach Uche through a manual pull request and import.">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        </defs>
+        <text class="lane" x="20" y="22">WHO</text>
+        <text class="lane" x="250" y="22">ELICITATION</text>
+        <text class="lane" x="550" y="22">ROWS</text>
+        <text class="lane" x="730" y="22">UCHE (SUPABASE + API)</text>
+
+        <g class="n"><rect x="20" y="40" width="150" height="64"/><text class="t" x="32" y="64">Outside researcher</text><text class="s" x="32" y="82">own API keys</text></g>
+        <g class="n el"><rect x="250" y="40" width="250" height="64"/><text class="t" x="262" y="64">runner.py  (this repo)</text><text class="s" x="262" y="82">Google native, langid v0.1, raw</text></g>
+        <g class="n"><rect x="550" y="40" width="150" height="64"/><text class="t" x="562" y="64">runs.jsonl</text><text class="s" x="562" y="82">+ runs_raw/ archive</text></g>
+
+        <g class="n"><rect x="250" y="170" width="250" height="48"/><text class="t" x="262" y="190">Model APIs</text><text class="s" x="262" y="207">Anthropic, OpenAI, Google, Moonshot</text></g>
+        <g class="n"><rect x="550" y="170" width="150" height="64"/><text class="t" x="562" y="194">runs_v0.jsonl</text><text class="s" x="562" y="212">dataset repo, 25 rows</text></g>
+        <g class="n"><rect x="730" y="170" width="260" height="48"/><text class="t" x="742" y="190">POST /admin/benchmark/import-runs</text><text class="s" x="742" y="207">scripts/ilubench_import.py</text></g>
+
+        <g class="n"><rect x="20" y="290" width="150" height="64"/><text class="t" x="32" y="314">You (admin)</text><text class="s" x="32" y="332">POST /admin/benchmark/run</text></g>
+        <g class="n el"><rect x="250" y="290" width="250" height="64"/><text class="t" x="262" y="314">services/benchmark.py  (Uche)</text><text class="s" x="262" y="332">Gemini OpenAI-compat, no raw</text></g>
+        <g class="n"><rect x="730" y="290" width="260" height="64"/><text class="t" x="742" y="314">benchmark_runs</text><text class="s" x="742" y="332">response text, run_key, model, run_at</text></g>
+
+        <g class="n"><rect x="730" y="400" width="260" height="64"/><text class="t" x="742" y="424">Scoring endpoints</text><text class="s" x="742" y="442">langid v0.2, LLM judge, human, deltas</text></g>
+        <g class="n"><rect x="730" y="500" width="260" height="48"/><text class="t" x="742" y="520">GET /public/ilubench-leaderboard</text><text class="s" x="742" y="537">uuamni.com/ilubench</text></g>
+
+        <path class="e" d="M170 72 H250" marker-end="url(#a1)"/>
+        <path class="e" d="M500 72 H550" marker-end="url(#a1)"/>
+        <path class="e" d="M375 104 V170" marker-end="url(#a1)"/>
+        <text class="lbl" x="383" y="142">2 fresh calls per probe</text>
+        <path class="e d" d="M625 104 V170" marker-end="url(#a1)"/>
+        <text class="lbl" x="633" y="142">PR, by hand</text>
+        <path class="e" d="M700 202 H730" marker-end="url(#a1)"/>
+        <path class="e" d="M860 218 V290" marker-end="url(#a1)"/>
+        <text class="lbl" x="852" y="258" text-anchor="end">notes stored as arm text</text>
+        <path class="e" d="M170 322 H250" marker-end="url(#a1)"/>
+        <path class="e" d="M375 290 V218" marker-end="url(#a1)"/>
+        <text class="lbl" x="383" y="262">2 fresh calls per probe</text>
+        <path class="e" d="M500 322 H730" marker-end="url(#a1)"/>
+        <text class="lbl" x="615" y="312" text-anchor="middle">insert both arms' text</text>
+        <path class="e" d="M860 354 V400" marker-end="url(#a1)"/>
+        <path class="e" d="M860 464 V500" marker-end="url(#a1)"/>
+      </svg>
+      </div>
+      <figcaption><strong>Two green boxes.</strong> The internal and public paths never share code. They already disagree on the Gemini wire path (native <code>generateContent</code> versus the OpenAI-compatible endpoint) and on the <code>output_language</code> heuristic (v0.1 in the runner, v0.2 in Uche). Rows imported from the dataset repo store the runner's <em>notes</em> as the arm text, so Uche's language scorer never sees the real response for those rows.</figcaption>
+    </figure>
+    <div class="legend">
+      <span><i class="sw el"></i> elicitation code</span>
+      <span><i class="sw d"></i> manual step</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow"><span class="eyebrow-i">02 / </span>Proposal</p>
+    <h2>One binary elicits, Uche scores and publishes</h2>
+    <p>You and any outside researcher run the same Go binary. Every run, internal or external, produces the same <code>runs.jsonl</code> rows and a raw archive. Uche stops executing probes itself and takes rows in through the importer that already exists, which needs two changes: read the raw archive to fill the arm text, and treat <code>pending_*</code> values as "no score" rather than a human score. Scoring, provenance, the time series and the leaderboard are untouched.</p>
+    <figure>
+      <div class="fig-wrap">
+      <svg viewBox="0 0 1010 560" role="img" aria-label="Proposal: both the admin and outside researchers run the single Go binary, whose rows and raw archive enter Uche through the existing import endpoint after two importer changes; Uche's own run endpoint is retired while scoring and the leaderboard stay.">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        </defs>
+        <text class="lane" x="20" y="22">WHO</text>
+        <text class="lane" x="250" y="22">ELICITATION</text>
+        <text class="lane" x="550" y="22">ROWS</text>
+        <text class="lane" x="730" y="22">UCHE (SUPABASE + API)</text>
+
+        <g class="n"><rect x="20" y="40" width="150" height="64"/><text class="t" x="32" y="64">Outside researcher</text><text class="s" x="32" y="82">same binary, own keys</text></g>
+        <g class="n"><rect x="550" y="40" width="150" height="64"/><text class="t" x="562" y="64">runs_v0.jsonl</text><text class="s" x="562" y="82">dataset repo, via PRs</text></g>
+
+        <g class="n el"><rect x="250" y="150" width="250" height="80"/><text class="t" x="262" y="176">ilubench  (Go binary)</text><text class="s" x="262" y="195">one elicitation implementation</text><text class="s" x="262" y="212">rows + raw archive, langid v0.1</text></g>
+        <g class="n"><rect x="550" y="150" width="150" height="80"/><text class="t" x="562" y="176">runs.jsonl</text><text class="s" x="562" y="195">+ runs_raw/ archive</text><text class="s" x="562" y="212">same for every run</text></g>
+        <g class="n chg"><rect x="730" y="150" width="260" height="80"/><text class="t" x="742" y="176">POST /admin/benchmark/import-runs</text><text class="s" x="742" y="195">change 1: arm text from runs_raw/</text><text class="s" x="742" y="212">change 2: pending_* is not a score</text></g>
+
+        <g class="n"><rect x="20" y="290" width="150" height="64"/><text class="t" x="32" y="314">You (admin)</text><text class="s" x="32" y="332">same binary, your keys</text></g>
+        <g class="n"><rect x="250" y="300" width="250" height="48"/><text class="t" x="262" y="320">Model APIs</text><text class="s" x="262" y="337">Anthropic, OpenAI, Google, Moonshot</text></g>
+        <g class="n"><rect x="730" y="290" width="260" height="64"/><text class="t" x="742" y="314">benchmark_runs</text><text class="s" x="742" y="332">real response text for every row</text></g>
+
+        <g class="n off"><rect x="250" y="420" width="250" height="48"/><text class="t" x="262" y="440">POST /admin/benchmark/run</text><text class="s" x="262" y="457">retired; scoring endpoints stay</text></g>
+        <line class="strike" x1="258" y1="444" x2="492" y2="444"/>
+        <g class="n"><rect x="730" y="400" width="260" height="64"/><text class="t" x="742" y="424">Scoring endpoints</text><text class="s" x="742" y="442">langid v0.2, LLM judge, human, deltas</text></g>
+        <g class="n"><rect x="730" y="500" width="260" height="48"/><text class="t" x="742" y="520">GET /public/ilubench-leaderboard</text><text class="s" x="742" y="537">uuamni.com/ilubench</text></g>
+
+        <path class="e" d="M170 72 H210 V322 H170"/>
+        <path class="e" d="M210 190 H250" marker-end="url(#a2)"/>
+        <path class="e" d="M375 230 V300" marker-end="url(#a2)"/>
+        <text class="lbl" x="383" y="270">2 fresh calls per probe</text>
+        <path class="e" d="M500 190 H550" marker-end="url(#a2)"/>
+        <path class="e d" d="M625 150 V104" marker-end="url(#a2)"/>
+        <text class="lbl" x="633" y="132">PR (outsiders)</text>
+        <path class="e" d="M700 72 H715 V190"/>
+        <path class="e" d="M700 190 H730" marker-end="url(#a2)"/>
+        <path class="e" d="M860 230 V290" marker-end="url(#a2)"/>
+        <text class="lbl" x="852" y="264" text-anchor="end">one import path</text>
+        <path class="e" d="M860 354 V400" marker-end="url(#a2)"/>
+        <path class="e" d="M860 464 V500" marker-end="url(#a2)"/>
+      </svg>
+      </div>
+      <figcaption><strong>One green box, one gold box.</strong> The gold dashed box is the only Uche code that changes. Because every row now carries its real response text, Uche's v0.2 language scorer can rescore <em>all</em> rows the same way, which removes the v0.1 versus v0.2 split instead of papering over it. The raw API JSON exists for every run, internal ones included, which Uche does not keep today.</figcaption>
+    </figure>
+    <div class="legend">
+      <span><i class="sw el"></i> elicitation code</span>
+      <span><i class="sw chg"></i> change to make</span>
+      <span><i class="sw off"></i> retired</span>
+      <span><i class="sw d"></i> manual step</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow"><span class="eyebrow-i">03 / </span>Port without adoption</p>
+    <h2>Same shape as today, with a faster public runner</h2>
+    <p>The Go binary replaces <code>runner.py</code> for you and for outsiders, and Uche keeps executing probes with its own Python. Nothing about the internal path changes. The cost is the gold bracket: two implementations of the same protocol that only stay identical if someone checks by hand every time either one moves.</p>
+    <figure>
+      <div class="fig-wrap">
+      <svg viewBox="0 0 1010 560" role="img" aria-label="After the port without adoption: the Go binary replaces runner.py on the public path while Uche keeps services/benchmark.py on the internal path, leaving two elicitation implementations that must be kept in step by hand.">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        </defs>
+        <text class="lane" x="20" y="22">WHO</text>
+        <text class="lane" x="250" y="22">ELICITATION</text>
+        <text class="lane" x="550" y="22">ROWS</text>
+        <text class="lane" x="730" y="22">UCHE (SUPABASE + API)</text>
+
+        <g class="n"><rect x="20" y="40" width="150" height="64"/><text class="t" x="32" y="64">Outside researcher</text><text class="s" x="32" y="82">own API keys</text></g>
+        <g class="n el"><rect x="250" y="40" width="250" height="64"/><text class="t" x="262" y="64">ilubench  (Go binary)</text><text class="s" x="262" y="82">Google native, langid v0.1, raw</text></g>
+        <g class="n"><rect x="550" y="40" width="150" height="64"/><text class="t" x="562" y="64">runs.jsonl</text><text class="s" x="562" y="82">+ runs_raw/ archive</text></g>
+
+        <g class="n"><rect x="250" y="170" width="250" height="48"/><text class="t" x="262" y="190">Model APIs</text><text class="s" x="262" y="207">Anthropic, OpenAI, Google, Moonshot</text></g>
+        <g class="n"><rect x="550" y="170" width="150" height="64"/><text class="t" x="562" y="194">runs_v0.jsonl</text><text class="s" x="562" y="212">dataset repo</text></g>
+        <g class="n"><rect x="730" y="170" width="260" height="48"/><text class="t" x="742" y="190">POST /admin/benchmark/import-runs</text><text class="s" x="742" y="207">still stores notes as arm text</text></g>
+
+        <g class="n"><rect x="20" y="290" width="150" height="64"/><text class="t" x="32" y="314">You (admin)</text><text class="s" x="32" y="332">POST /admin/benchmark/run</text></g>
+        <g class="n el"><rect x="250" y="290" width="250" height="64"/><text class="t" x="262" y="314">services/benchmark.py  (Uche)</text><text class="s" x="262" y="332">Gemini OpenAI-compat, no raw</text></g>
+        <g class="n"><rect x="730" y="290" width="260" height="64"/><text class="t" x="742" y="314">benchmark_runs</text><text class="s" x="742" y="332">response text, run_key, model, run_at</text></g>
+
+        <g class="n"><rect x="730" y="400" width="260" height="64"/><text class="t" x="742" y="424">Scoring endpoints</text><text class="s" x="742" y="442">langid v0.2, LLM judge, human, deltas</text></g>
+        <g class="n"><rect x="730" y="500" width="260" height="48"/><text class="t" x="742" y="520">GET /public/ilubench-leaderboard</text><text class="s" x="742" y="537">uuamni.com/ilubench</text></g>
+
+        <path class="brace" d="M238 40 H232 V354 H238"/>
+        <text class="brace-t" transform="translate(222 197) rotate(-90)" text-anchor="middle">2 IMPLEMENTATIONS, SYNCED BY HAND</text>
+
+        <path class="e" d="M170 72 H250" marker-end="url(#a3)"/>
+        <path class="e" d="M500 72 H550" marker-end="url(#a3)"/>
+        <path class="e" d="M375 104 V170" marker-end="url(#a3)"/>
+        <text class="lbl" x="383" y="142">2 fresh calls per probe</text>
+        <path class="e d" d="M625 104 V170" marker-end="url(#a3)"/>
+        <text class="lbl" x="633" y="142">PR, by hand</text>
+        <path class="e" d="M700 202 H730" marker-end="url(#a3)"/>
+        <path class="e" d="M860 218 V290" marker-end="url(#a3)"/>
+        <text class="lbl" x="852" y="258" text-anchor="end">notes stored as arm text</text>
+        <path class="e" d="M170 322 H250" marker-end="url(#a3)"/>
+        <path class="e" d="M375 290 V218" marker-end="url(#a3)"/>
+        <text class="lbl" x="383" y="262">2 fresh calls per probe</text>
+        <path class="e" d="M500 322 H730" marker-end="url(#a3)"/>
+        <text class="lbl" x="615" y="312" text-anchor="middle">insert both arms' text</text>
+        <path class="e" d="M860 354 V400" marker-end="url(#a3)"/>
+        <path class="e" d="M860 464 V500" marker-end="url(#a3)"/>
+      </svg>
+      </div>
+      <figcaption><strong>Two green boxes again.</strong> The port improves the public runner and changes nothing about the risk. Internal and external rows still come from different code, the Gemini wire path and the language heuristic still differ by path, and an outsider still cannot reproduce an internal row with the tool you publish.</figcaption>
+    </figure>
+    <div class="legend">
+      <span><i class="sw el"></i> elicitation code</span>
+      <span><i class="sw d"></i> manual step</span>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow"><span class="eyebrow-i">04 / </span>Side by side</p>
+    <h2>What each option leaves you maintaining</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Property</th><th>Today</th><th class="lean">Proposal</th><th>Port, no adoption</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Elicitation implementations</td><td>2 (benchmark.py, runner.py)</td><td class="win">1 (ilubench)</td><td>2 (benchmark.py, ilubench)</td></tr>
+          <tr><td>Gemini wire path</td><td>Differs by path</td><td class="win">One: native generateContent</td><td>Differs by path</td></tr>
+          <tr><td>output_language on rows</td><td>v0.2 internal, v0.1 external</td><td class="win">v0.1 at elicitation, v0.2 rescored in Uche for every row</td><td>v0.2 internal, v0.1 external</td></tr>
+          <tr><td>Raw API JSON kept</td><td>Public runs only</td><td class="win">Every run</td><td>Public runs only</td></tr>
+          <tr><td>Outsider can reproduce an internal row</td><td>No, different code</td><td class="win">Yes, same binary</td><td>No, different code</td></tr>
+          <tr><td>Arm text on imported rows</td><td>Notes, not the response</td><td class="win">Real response, from the archive</td><td>Notes, not the response</td></tr>
+          <tr><td>Uche work required</td><td>None</td><td>Two importer changes, retire one endpoint, keep its tests for scoring</td><td>None</td></tr>
+          <tr><td>Protocol drift risk</td><td>Present</td><td class="win">Removed</td><td>Present</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ask">
+      <p class="card-title">The decision</p>
+      <p>Pick before the v0.2 probe set is run, so the first v0.2 matrix is produced once, by one implementation, with a raw archive behind every row. If you choose the proposal, the two importer changes are one small Uche pull request; I can scope it after Milestone 3, when the Go binary passes the full parity suite. If you choose to keep both, the one thing worth doing anyway is the importer's arm-text fix, because it affects rows Uche already holds.</p>
+    </div>
+  </section>
+
+  <footer>UUAMNI · IlùBench · prepared from the ilubench-runner, ilubench and uuamni-uche repositories, September 2026</footer>
+</div>
+
+</body></html>
+</body>
+</html>

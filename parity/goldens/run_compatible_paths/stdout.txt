@@ -1,0 +1,13 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 1)
+Provider:  compatible (<MOCK>/ok/v1)
+Model:     meta/llama 3:70b
+Key:       OPENAI_API_KEY is NOT set
+Plan:      1 probes x 2 arms = 2 API calls, no system prompt, provider default sampling
+  ilu-003  arm_A (English prompt) + arm_B (Igbo prompt)
+
+Note: OPENAI_API_KEY is not set; sending unauthenticated requests (fine for local servers such as vLLM).
+  ok ilu-003 arm_A: output_language=en
+  ok ilu-003 arm_B: output_language=ig
+
+Appended 1 row(s) to sub/rows.jsonl.
+Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).

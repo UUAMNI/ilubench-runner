@@ -1,0 +1,38 @@
+# Go port CI: vet, unit and differential tests (python3 is present on the
+# runner, so the tests that compare against runner.py run for real), then the
+# built binary against the parity goldens. The --milestone flag advances as
+# PORT_PLAN.md milestones land; a scenario above it is not yet expected to pass.
+name: go
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: go test + parity (Go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.24"]
+    env:
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Vet
+        run: go vet ./...
+      - name: Unit, differential and golden tests
+        run: go test ./...
+      - name: Build
+        run: go build -o bin/ilubench ./cmd/ilubench
+      - name: Parity goldens through the built binary
+        run: python3 parity/harness.py check --impl go --bin ./bin/ilubench --milestone 3
+      - name: Shadow tooling self-test (Milestone 5)
+        run: bash parity/shadow_selftest.sh ./bin/ilubench

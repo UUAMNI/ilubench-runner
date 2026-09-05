@@ -1,0 +1,16 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 2)
+Provider:  compatible (<MOCK>/ok/v1)
+Model:     mock-gpt
+Key:       OPENAI_API_KEY is NOT set
+Plan:      2 probes x 2 arms = 4 API calls, no system prompt, provider default sampling
+  ilu-001  arm_A (English prompt) + arm_B (Igbo prompt)
+  ilu-001  arm_A (English prompt) + arm_B (Igbo prompt)
+
+Note: OPENAI_API_KEY is not set; sending unauthenticated requests (fine for local servers such as vLLM).
+  ok ilu-001 arm_A: output_language=mixed
+  ok ilu-001 arm_B: output_language=ig
+  ok ilu-001 arm_A: output_language=mixed
+  ok ilu-001 arm_B: output_language=ig
+
+Appended 2 row(s) to runs.jsonl.
+Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).

@@ -1,0 +1,4 @@
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE fail-b arm A is fine"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE fail-b [[http:500]]"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE long english"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE long igbo"}]}

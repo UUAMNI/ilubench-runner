@@ -1,0 +1,16 @@
+Probe set: <REPO>/parity/probes/edge.jsonl (7 probes; running 2)
+Provider:  compatible (<MOCK>/ok/v1)
+Model:     mock-gpt
+Key:       OPENAI_API_KEY is NOT set
+Plan:      2 probes x 2 arms = 4 API calls, no system prompt, provider default sampling
+  edge-fail-b  arm_A (English prompt) + arm_B (Igbo prompt)
+  edge-long  arm_A (English prompt) + arm_B (Igbo prompt)
+
+Note: OPENAI_API_KEY is not set; sending unauthenticated requests (fine for local servers such as vLLM).
+  ok edge-fail-b arm_A: output_language=mixed
+  FAIL edge-fail-b arm_B: HTTP 500: {"error": {"type": "mock_failure", "code": 500, "message": "mock failure; caller key was none"}}
+  ok edge-long arm_A: output_language=mixed
+  ok edge-long arm_B: output_language=ig
+
+Appended 1 row(s) to runs.jsonl; 1 probe(s) failed.
+Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).

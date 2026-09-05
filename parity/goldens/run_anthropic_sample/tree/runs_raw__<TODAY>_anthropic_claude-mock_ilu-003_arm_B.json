@@ -1,0 +1,48 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com",
+  "requested_model": "claude-mock",
+  "reported_model": "claude-mock-reported",
+  "probe_id": "ilu-003",
+  "arm": "arm_B",
+  "prompt": "Kọwaa ilu a: Igwe bụ ike.",
+  "response_text": "Igwe bụ ike pụtara na ndị mmadụ nwere ike ma ha dị n'otu.",
+  "raw_api_response": {
+    "id": "msg_mock",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-mock-reported",
+    "content": [
+      {
+        "type": "text",
+        "text": "Igwe bụ ike pụtara na ndị mm"
+      },
+      {
+        "type": "tool_use",
+        "id": "tu_1",
+        "name": "ignored",
+        "input": {}
+      },
+      {
+        "type": "text",
+        "text": "adụ nwere ike ma ha dị n'otu."
+      }
+    ],
+    "stop_reason": "end_turn",
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

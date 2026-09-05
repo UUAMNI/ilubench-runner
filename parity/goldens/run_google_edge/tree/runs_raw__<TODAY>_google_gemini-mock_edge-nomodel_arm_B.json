@@ -1,0 +1,43 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "google",
+  "endpoint": "https://generativelanguage.googleapis.com",
+  "requested_model": "gemini-mock",
+  "reported_model": "gemini-mock",
+  "probe_id": "edge-nomodel",
+  "arm": "arm_B",
+  "prompt": "EDGE nomodel ig [[nomodel]]",
+  "response_text": "Nzaghachi nke na-enweghị mkpụrụ ọkọlọtọ.",
+  "raw_api_response": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "Nzaghachi nke na-enw"
+            },
+            {
+              "text": "eghị mkpụrụ ọkọlọtọ."
+            }
+          ],
+          "role": "model"
+        },
+        "finishReason": "STOP"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

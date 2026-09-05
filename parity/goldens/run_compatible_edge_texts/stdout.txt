@@ -1,0 +1,19 @@
+Probe set: <REPO>/parity/probes/edge.jsonl (7 probes; running 3)
+Provider:  compatible (<MOCK>/ok/v1)
+Model:     mock-gpt
+Key:       OPENAI_API_KEY is NOT set
+Plan:      3 probes x 2 arms = 6 API calls, no system prompt, provider default sampling
+  edge-empty  arm_A (English prompt) + arm_B (Igbo prompt)
+  edge-long  arm_A (English prompt) + arm_B (Igbo prompt)
+  edge-nomodel  arm_A (English prompt) + arm_B (Igbo prompt)
+
+Note: OPENAI_API_KEY is not set; sending unauthenticated requests (fine for local servers such as vLLM).
+  ok edge-empty arm_A: output_language=empty
+  ok edge-empty arm_B: output_language=empty
+  ok edge-long arm_A: output_language=mixed
+  ok edge-long arm_B: output_language=ig
+  ok edge-nomodel arm_A: output_language=mixed
+  ok edge-nomodel arm_B: output_language=ig
+
+Appended 3 row(s) to runs.jsonl.
+Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).

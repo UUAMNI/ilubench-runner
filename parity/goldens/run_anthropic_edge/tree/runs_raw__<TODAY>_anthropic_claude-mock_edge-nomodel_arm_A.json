@@ -1,0 +1,47 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com",
+  "requested_model": "claude-mock",
+  "reported_model": "claude-mock",
+  "probe_id": "edge-nomodel",
+  "arm": "arm_A",
+  "prompt": "EDGE nomodel [[nomodel]]",
+  "response_text": "A plain reply whose response omits the model field.",
+  "raw_api_response": {
+    "id": "msg_mock",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "A plain reply whose respo"
+      },
+      {
+        "type": "tool_use",
+        "id": "tu_1",
+        "name": "ignored",
+        "input": {}
+      },
+      {
+        "type": "text",
+        "text": "nse omits the model field."
+      }
+    ],
+    "stop_reason": "end_turn",
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

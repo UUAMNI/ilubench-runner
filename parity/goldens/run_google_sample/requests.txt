@@ -1,0 +1,4 @@
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"Explain this proverb: Gidi gidi bụ ugwu eze."}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"Kọwaa ilu a: Gidi gidi bụ ugwu eze."}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"Explain this proverb: Igwe bụ ike."}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"Kọwaa ilu a: Igwe bụ ike."}]}]}

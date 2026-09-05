@@ -1,0 +1,2 @@
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"Explain this proverb: Igwe bụ ike."}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"Kọwaa ilu a: Igwe bụ ike."}]}

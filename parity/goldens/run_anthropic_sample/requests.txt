@@ -1,0 +1,4 @@
+POST /ok/anthropic/v1/messages auth=[x-api-key=sk-ant-parity-0001, anthropic-version=2023-06-01] ct=application/json body={"model":"claude-mock","max_tokens":2048,"messages":[{"role":"user","content":"Explain this proverb: Gidi gidi bụ ugwu eze."}]}
+POST /ok/anthropic/v1/messages auth=[x-api-key=sk-ant-parity-0001, anthropic-version=2023-06-01] ct=application/json body={"model":"claude-mock","max_tokens":2048,"messages":[{"role":"user","content":"Kọwaa ilu a: Gidi gidi bụ ugwu eze."}]}
+POST /ok/anthropic/v1/messages auth=[x-api-key=sk-ant-parity-0001, anthropic-version=2023-06-01] ct=application/json body={"model":"claude-mock","max_tokens":2048,"messages":[{"role":"user","content":"Explain this proverb: Igwe bụ ike."}]}
+POST /ok/anthropic/v1/messages auth=[x-api-key=sk-ant-parity-0001, anthropic-version=2023-06-01] ct=application/json body={"model":"claude-mock","max_tokens":2048,"messages":[{"role":"user","content":"Kọwaa ilu a: Igwe bụ ike."}]}

@@ -1,0 +1,47 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "anthropic",
+  "endpoint": "https://api.anthropic.com",
+  "requested_model": "claude-mock",
+  "reported_model": "claude-mock",
+  "probe_id": "edge-nomodel",
+  "arm": "arm_B",
+  "prompt": "EDGE nomodel ig [[nomodel]]",
+  "response_text": "Nzaghachi nke na-enweghị mkpụrụ ọkọlọtọ.",
+  "raw_api_response": {
+    "id": "msg_mock",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Nzaghachi nke na-enw"
+      },
+      {
+        "type": "tool_use",
+        "id": "tu_1",
+        "name": "ignored",
+        "input": {}
+      },
+      {
+        "type": "text",
+        "text": "eghị mkpụrụ ọkọlọtọ."
+      }
+    ],
+    "stop_reason": "end_turn",
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

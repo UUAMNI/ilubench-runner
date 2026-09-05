@@ -1,0 +1,44 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "google",
+  "endpoint": "https://generativelanguage.googleapis.com",
+  "requested_model": "gemini-mock",
+  "reported_model": "gemini-mock-reported",
+  "probe_id": "edge-badshape",
+  "arm": "arm_B",
+  "prompt": "EDGE badshape arm B",
+  "response_text": "Mock reply for: EDGE badshape arm B",
+  "raw_api_response": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "Mock reply for: E"
+            },
+            {
+              "text": "DGE badshape arm B"
+            }
+          ],
+          "role": "model"
+        },
+        "finishReason": "STOP"
+      }
+    ],
+    "modelVersion": "gemini-mock-reported",
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

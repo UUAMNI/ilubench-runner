@@ -13,3 +13,16 @@ runs_raw/
 __pycache__/
 *.pyc
 .venv/
+
+# Parity goldens are the characterization record of runner.py (see parity/).
+# They contain .json archives that the rule above would otherwise hide.
+!/parity/goldens/**/*.json
+
+# parity harness scratch
+/parity/.mock_requests.log
+
+# Local build output
+/bin/
+
+# Shadow-week evidence (parity/shadow.sh); kept locally, never committed
+/shadow/

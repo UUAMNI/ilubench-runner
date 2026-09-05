@@ -1,0 +1,6 @@
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE empty reply"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE digits reply"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE long english"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE long igbo"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE nomodel [[nomodel]]"}]}
+POST /ok/v1/chat/completions auth=[] ct=application/json body={"model":"mock-gpt","messages":[{"role":"user","content":"EDGE nomodel ig [[nomodel]]"}]}

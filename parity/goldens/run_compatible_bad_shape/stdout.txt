@@ -1,0 +1,11 @@
+Probe set: <REPO>/parity/probes/edge.jsonl (7 probes; running 1)
+Provider:  compatible (<MOCK>/ok/v1)
+Model:     mock-gpt
+Key:       OPENAI_API_KEY is NOT set
+Plan:      1 probes x 2 arms = 2 API calls, no system prompt, provider default sampling
+  edge-badshape  arm_A (English prompt) + arm_B (Igbo prompt)
+
+Note: OPENAI_API_KEY is not set; sending unauthenticated requests (fine for local servers such as vLLM).
+  FAIL edge-badshape arm_A: TypeError: string indices must be integers, not 'str'
+
+Appended 0 row(s) to runs.jsonl; 1 probe(s) failed.

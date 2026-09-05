@@ -1,0 +1,35 @@
+usage: runner.py [-h]
+                 [--provider {anthropic,compatible,google,moonshot,openai}]
+                 [--model MODEL] [--base-url BASE_URL]
+                 [--api-key-env API_KEY_ENV] [--probe-set PATH]
+                 [--probes ID,ID] [--out PATH] [--raw-dir DIR] [--dry-run]
+
+Run the IlùBench two-arm elicitation protocol against a model API.
+
+options:
+  -h, --help            show this help message and exit
+  --provider {anthropic,compatible,google,moonshot,openai}
+                        API dialect. Inferred as 'compatible' when --base-url
+                        is set.
+  --model MODEL         Model id to test — you pick; there are no defaults.
+                        Omit to list the endpoint's available models and exit.
+  --base-url BASE_URL   OpenAI-compatible endpoint base URL, e.g.
+                        https://openrouter.ai/api/v1 or
+                        http://localhost:8000/v1.
+  --api-key-env API_KEY_ENV
+                        Name of the environment variable holding the API key
+                        (default depends on --provider, e.g.
+                        ANTHROPIC_API_KEY).
+  --probe-set PATH      Local probe JSONL. Default: fetch the published set
+                        from huggingface.co/datasets/UUAMNI/ilubench.
+  --probes ID,ID        Comma-separated probe ids to run (default: all in the
+                        set).
+  --out PATH            Structured rows are appended here (default:
+                        runs.jsonl).
+  --raw-dir DIR         Raw API responses are archived here (default:
+                        runs_raw/).
+  --dry-run             Print the call plan and key status; no API calls, no
+                        writes.
+
+Keys are read from environment variables only and are never printed or
+written.

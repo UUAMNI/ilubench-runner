@@ -1,0 +1,2 @@
+ERROR: probe ids not in <REPO>/examples/sample_probes.jsonl: ['ilu-999', 'nope']
+       Available: ['ilu-001', 'ilu-003']

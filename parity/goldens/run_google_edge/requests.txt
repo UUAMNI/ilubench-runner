@@ -1,0 +1,5 @@
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"EDGE fail-a [[http:429]]"}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"EDGE badshape [[badshape]]"}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"EDGE badshape arm B"}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"EDGE nomodel [[nomodel]]"}]}]}
+POST /ok/google/v1beta/models/gemini-mock:generateContent auth=[x-goog-api-key=AIza-parity-0001] ct=application/json body={"contents":[{"parts":[{"text":"EDGE nomodel ig [[nomodel]]"}]}]}

@@ -1,0 +1,9 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 2)
+Provider:  compatible (<MOCK>/listfail/v1)
+Model:     (not set — pass --model; omit to list available models)
+Key:       OPENAI_API_KEY is set
+Plan:      2 probes x 2 arms = 4 API calls, no system prompt, provider default sampling
+  ilu-001  arm_A (English prompt) + arm_B (Igbo prompt)
+  ilu-003  arm_A (English prompt) + arm_B (Igbo prompt)
+
+ERROR: could not list models: HTTP 500: {"error": {"type": "mock_failure", "code": 500, "message": "mock failure; caller key was [redacted]"}}

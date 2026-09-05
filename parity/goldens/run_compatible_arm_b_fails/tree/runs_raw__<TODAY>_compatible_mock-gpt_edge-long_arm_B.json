@@ -1,0 +1,41 @@
+{
+  "date_utc": "<DATE_UTC>",
+  "provider": "compatible",
+  "endpoint": "<MOCK>/ok/v1",
+  "requested_model": "mock-gpt",
+  "reported_model": "mock-gpt-1.5-reported",
+  "probe_id": "edge-long",
+  "arm": "arm_B",
+  "prompt": "EDGE long igbo",
+  "response_text": "Ilu a pụ́tara na ịdị́ n'otu bụ́ ike. Eze na-enwe ike site n’aka ndị ya.Ọ bụ eziokwu na ‘igwe bụ ike’ ma ọ bụkwa ihe ndị Igbo kwuru site n'ala ha.",
+  "raw_api_response": {
+    "id": "chatcmpl-mock",
+    "object": "chat.completion",
+    "created": 1700000000,
+    "model": "mock-gpt-1.5-reported",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Ilu a pụ́tara na ịdị́ n'otu bụ́ ike. Eze na-enwe ike site n’aka ndị ya.Ọ bụ eziokwu na ‘igwe bụ ike’ ma ọ bụkwa ihe ndị Igbo kwuru site n'ala ha."
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 20,
+      "ratio": 0.1,
+      "tiny": 1e-07,
+      "sci": 100000.0,
+      "big": 12345678901234567890
+    },
+    "empty_list": [],
+    "empty_obj": {},
+    "html": "<b>&</b> \"q\" \\ /",
+    "sep": "line sep",
+    "flag": true,
+    "nothing": null
+  }
+}

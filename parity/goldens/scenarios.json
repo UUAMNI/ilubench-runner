@@ -1,0 +1,778 @@
+[
+ {
+  "name": "cli_no_args",
+  "args": [],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "usage",
+  "note": "--provider required: exit 2, usage on stderr, nothing on stdout",
+  "milestone": 2
+ },
+ {
+  "name": "cli_bad_provider",
+  "args": [
+   "--provider",
+   "foo"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "usage",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "cli_compatible_without_base_url",
+  "args": [
+   "--provider",
+   "compatible",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "usage",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "cli_help",
+  "args": [
+   "-h"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "skip",
+  "stderr": "empty",
+  "note": "usage text differs by design; exit 0 is the contract",
+  "milestone": 2
+ },
+ {
+  "name": "probes_file_missing",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "nope.jsonl"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "probes_file_is_directory",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/examples"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 12: misleading 'could not fetch from HuggingFace' message, preserved",
+  "milestone": 2
+ },
+ {
+  "name": "probes_bad_json",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/parity/probes/bad_json.jsonl"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "tail of 'ERROR: bad probe set:' is Python's JSON error text; prefix-compared",
+  "milestone": 2
+ },
+ {
+  "name": "probes_missing_field",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/parity/probes/missing_field.jsonl"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "probes_blank_file",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/parity/probes/blank.jsonl"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "probes_unknown_ids",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   "ilu-001,ilu-999,nope",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "Python list repr of the missing ids and of the available ids",
+  "milestone": 2
+ },
+ {
+  "name": "dry_run_anthropic_no_key",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "dry_run_with_key_subset",
+  "args": [
+   "--provider",
+   "google",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   " ilu-003 , ,",
+   "--dry-run"
+  ],
+  "env": {
+   "GEMINI_API_KEY": "AIza-parity-0001"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "--probes trimming and blank entries",
+  "milestone": 2
+ },
+ {
+  "name": "dry_run_custom_key_env",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--api-key-env",
+   "MY_ROUTER_KEY",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--dry-run"
+  ],
+  "env": {
+   "MY_ROUTER_KEY": "rk-1"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "provider inferred as 'compatible' from --base-url",
+  "milestone": 2
+ },
+ {
+  "name": "dry_run_base_url_with_anthropic",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 16: base_url printed as endpoint although anthropic calls ignore it",
+  "milestone": 2
+ },
+ {
+  "name": "dry_run_probes_flag_blank",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   "",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "--probes '' means all probes",
+  "milestone": 2
+ },
+ {
+  "name": "dry_run_dup_ids_in_file",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/parity/probes/dup_ids.jsonl",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "duplicate id: first position, last content",
+  "milestone": 2
+ },
+ {
+  "name": "no_key_openai",
+  "args": [
+   "--provider",
+   "openai",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 20: plan prints, then the key check fails with exit 1",
+  "milestone": 2
+ },
+ {
+  "name": "list_models_compatible",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1/",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "OPENAI_API_KEY": "sk-parity-openai-0001"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "trailing slash on --base-url is stripped; ids sorted by code point",
+  "milestone": 2
+ },
+ {
+  "name": "list_models_model_empty_string",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "OPENAI_API_KEY": "sk-parity-openai-0001"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "--model '' behaves as unset",
+  "milestone": 2
+ },
+ {
+  "name": "list_models_anthropic",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "ANTHROPIC_API_KEY": "sk-ant-parity-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 2
+ },
+ {
+  "name": "list_models_google",
+  "args": [
+   "--provider",
+   "google",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "GEMINI_API_KEY": "AIza-parity-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "'models/' prefix stripped",
+  "milestone": 2
+ },
+ {
+  "name": "list_models_failure_redacts_key",
+  "args": [
+   "--base-url",
+   "{MOCK}/listfail/v1",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "OPENAI_API_KEY": "sk-parity-openai-0001"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 18: the key inside the error body is replaced by [redacted]",
+  "milestone": 2
+ },
+ {
+  "name": "run_compatible_sample",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "OPENAI_API_KEY": "sk-parity-openai-0001"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 3
+ },
+ {
+  "name": "run_moonshot_sample",
+  "args": [
+   "--provider",
+   "moonshot",
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "kimi-mock",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "MOONSHOT_API_KEY": "mk-parity-0001"
+  },
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "--base-url overrides a named openai-dialect provider's endpoint; provider name kept in outputs",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_unauthenticated",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "m",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   "ilu-001"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "'Note:' line, no Authorization header on the wire",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_edge_texts",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-empty,edge-long,edge-nomodel"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 rows 2-5: empty/digits text, 90-code-point opening, Unicode whitespace, NFD input, odd floats",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_arm_b_fails",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-fail-b,edge-long"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 13: arm A raw file stays, no row, exit 2, later probes still run",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_arm_a_fails",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-fail-a"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 13: arm B is never called (see requests.txt)",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_bad_shape",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-badshape"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 9: non-HTTP failure; the text after 'FAIL ...:' is Python's exception repr, prefix-compared",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_non_json",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-nonjson"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 9, as above",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_duplicate_probes",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   "ilu-001,ilu-001"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 10: runs twice, two rows with the same run_id, raw files overwritten",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_paths",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "meta/llama 3:70b",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   "ilu-003",
+   "--out",
+   "sub/rows.jsonl",
+   "--raw-dir",
+   "./raw2/"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [
+   "sub"
+  ],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "A5 row 17: slug in filenames, './' and trailing '/' normalized in notes/evidence",
+  "milestone": 3
+ },
+ {
+  "name": "run_compatible_out_dir_missing",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl",
+   "--probes",
+   "ilu-003",
+   "--out",
+   "nodir/rows.jsonl"
+  ],
+  "env": {},
+  "shim": false,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "prefix",
+  "stderr": "python_traceback",
+  "note": "A5 row 21: Python tracebacks with exit 1 AFTER the API calls ran and raw files were written; Go prints an ERROR line instead",
+  "milestone": 3
+ },
+ {
+  "name": "run_anthropic_sample",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--model",
+   "claude-mock",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "ANTHROPIC_API_KEY": "sk-ant-parity-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "max_tokens 2048 on the wire; text blocks joined, tool_use skipped",
+  "milestone": 3
+ },
+ {
+  "name": "run_anthropic_edge",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--model",
+   "claude-mock",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-fail-b,edge-badshape,edge-nomodel"
+  ],
+  "env": {
+   "ANTHROPIC_API_KEY": "sk-ant-parity-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "badshape yields empty text (no exception) in this dialect; nomodel falls back to the requested id",
+  "milestone": 3
+ },
+ {
+  "name": "run_google_sample",
+  "args": [
+   "--provider",
+   "google",
+   "--model",
+   "gemini-mock",
+   "--probe-set",
+   "{REPO}/examples/sample_probes.jsonl"
+  ],
+  "env": {
+   "GEMINI_API_KEY": "AIza-parity-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "modelVersion is the reported model; parts joined",
+  "milestone": 3
+ },
+ {
+  "name": "run_google_edge",
+  "args": [
+   "--provider",
+   "google",
+   "--model",
+   "gemini-mock",
+   "--probe-set",
+   "{REPO}/parity/probes/edge.jsonl",
+   "--probes",
+   "edge-fail-a,edge-badshape,edge-nomodel"
+  ],
+  "env": {
+   "GEMINI_API_KEY": "AIza-parity-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "",
+  "milestone": 3
+ },
+ {
+  "name": "hf_probe_set_dry_run",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "no --probe-set: dry run still fetches; source printed as the URL",
+  "milestone": 2
+ },
+ {
+  "name": "hf_probe_set_unreachable",
+  "args": [
+   "--provider",
+   "anthropic",
+   "--dry-run"
+  ],
+  "env": {},
+  "shim": true,
+  "profile": "hf404",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "HTTP error on fetch: 'could not fetch' message, exit 1; tail prefix-compared",
+  "milestone": 2
+ },
+ {
+  "name": "hf_probe_set_run",
+  "args": [
+   "--base-url",
+   "{MOCK}/ok/v1",
+   "--model",
+   "mock-gpt"
+  ],
+  "env": {
+   "OPENAI_API_KEY": "sk-parity-openai-0001"
+  },
+  "shim": true,
+  "profile": "ok",
+  "pre": [],
+  "stdout": "exact",
+  "stderr": "empty",
+  "note": "fetched probes drive a full compatible run",
+  "milestone": 3
+ }
+]

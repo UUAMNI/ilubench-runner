@@ -1,0 +1,16 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 2)
+Provider:  compatible (<MOCK>/ok/v1)
+Model:     (not set — pass --model; omit to list available models)
+Key:       OPENAI_API_KEY is set
+Plan:      2 probes x 2 arms = 4 API calls, no system prompt, provider default sampling
+  ilu-001  arm_A (English prompt) + arm_B (Igbo prompt)
+  ilu-003  arm_A (English prompt) + arm_B (Igbo prompt)
+
+No --model given. <MOCK>/ok/v1 reports 5 models:
+  
+  Beta
+  alpha
+  zeta
+  ọmodel-with-diacritic
+
+Pick one and re-run with --model <id>. (IlùBench has no default model — the choice is the experiment.)

@@ -1,0 +1,14 @@
+Probe set: <REPO>/examples/sample_probes.jsonl (2 probes; running 2)
+Provider:  google (https://generativelanguage.googleapis.com)
+Model:     (not set — pass --model; omit to list available models)
+Key:       GEMINI_API_KEY is set
+Plan:      2 probes x 2 arms = 4 API calls, no system prompt, provider default sampling
+  ilu-001  arm_A (English prompt) + arm_B (Igbo prompt)
+  ilu-003  arm_A (English prompt) + arm_B (Igbo prompt)
+
+No --model given. https://generativelanguage.googleapis.com reports 3 models:
+  gemini-mock-a
+  gemini-mock-b
+  no-prefix-name
+
+Pick one and re-run with --model <id>. (IlùBench has no default model — the choice is the experiment.)

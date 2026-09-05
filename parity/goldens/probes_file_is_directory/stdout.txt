@@ -1,0 +1,2 @@
+ERROR: could not fetch the probe set from HuggingFace ([Errno 21] Is a directory: '<REPO>/examples').
+       Offline? Point --probe-set at a local file, e.g. --probe-set examples/sample_probes.jsonl
