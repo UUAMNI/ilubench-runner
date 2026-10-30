@@ -49,7 +49,26 @@ func TestParse(t *testing.T) {
 				if c.Provider != "google" || c.Model != "gemini" || !c.DryRun || c.Probes != "" {
 					t.Errorf("got %+v", c)
 				}
+				if c.Samples != 1 || c.Paraphrases != "" {
+					t.Errorf("sampling defaults: %+v", c)
+				}
 			}},
+		{name: "samples and paraphrases", args: []string{"--provider", "openai", "--samples", "5", "--paraphrases=p.jsonl"},
+			check: func(t *testing.T, c *Config) {
+				if c.Samples != 5 || c.Paraphrases != "p.jsonl" {
+					t.Errorf("got %+v", c)
+				}
+			}},
+		{name: "samples zero", args: []string{"--provider", "openai", "--samples", "0"}, wantCode: 2, wantDone: true,
+			wantErr: "ilubench: error: argument --samples: expected a whole number of 1 or more, got '0'\n"},
+		{name: "samples word", args: []string{"--provider", "openai", "--samples", "x2"}, wantCode: 2, wantDone: true,
+			wantErr: "argument --samples: expected a whole number of 1 or more, got 'x2'"},
+		{name: "samples signed", args: []string{"--provider", "openai", "--samples=+2"}, wantCode: 2, wantDone: true,
+			wantErr: "got '+2'"},
+		{name: "samples negative", args: []string{"--provider", "openai", "--samples=-1"}, wantCode: 2, wantDone: true,
+			wantErr: "got '-1'"},
+		{name: "samples empty", args: []string{"--provider", "openai", "--samples", ""}, wantCode: 2, wantDone: true,
+			wantErr: "got ''"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

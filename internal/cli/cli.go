@@ -14,8 +14,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
+
+	"github.com/UUAMNI/ilubench-runner/internal/pyrepr"
 )
 
 // Config is the parsed command line. Zero values mean "not given", matching
@@ -30,6 +34,14 @@ type Config struct {
 	Out       string
 	RawDir    string
 	DryRun    bool
+
+	// Samples is --samples (default 1) and Paraphrases is --paraphrases (""
+	// when not given). Either one switches on sampled output, the rubric v0.3
+	// contract shared with the dataset repo's scripts/run_probes.py: rows gain
+	// prompt_variant, sample_index, samples and sample_group. Neither flag is
+	// in runner.py; with both left alone, output is byte-identical to it.
+	Samples     int
+	Paraphrases string
 }
 
 // Providers are the accepted --provider choices, in argparse's sorted order.
@@ -46,7 +58,7 @@ const prog = "ilubench"
 var usageLine = "usage: " + prog + ` [-h] [--provider {anthropic,compatible,google,moonshot,openai,xai}]
                 [--model MODEL] [--base-url BASE_URL] [--api-key-env API_KEY_ENV]
                 [--probe-set PATH] [--probes ID,ID] [--out PATH] [--raw-dir DIR]
-                [--dry-run] [--version]
+                [--samples K] [--paraphrases PATH] [--dry-run] [--version]
 `
 
 var helpBody = `
@@ -69,6 +81,14 @@ options:
   --probes ID,ID        Comma-separated probe ids to run (default: all in the set).
   --out PATH            Structured rows are appended here (default: runs.jsonl).
   --raw-dir DIR         Raw API responses are archived here (default: runs_raw/).
+  --samples K           Ask each wording K times, each a fresh call (default: 1).
+                        Rows then carry prompt_variant, sample_index, samples and
+                        sample_group for the within-language consistency measure.
+  --paraphrases PATH    Also run the approved wordings in this paraphrase file
+                        (probe_paraphrases_v0.3.jsonl). Rows that are not approved
+                        or have an empty prompt are skipped and listed on stderr.
+                        Paraphrase rows are appended to a separate file named
+                        after --out (default: runs_paraphrases.jsonl).
   --dry-run             Print the call plan and key status; no API calls, no writes.
 
 Keys are read from environment variables only and are never printed or written.
@@ -90,6 +110,9 @@ func Parse(args []string, stdout, stderr io.Writer) (cfg *Config, code int, done
 	fs.StringVar(&cfg.Out, "out", "runs.jsonl", "")
 	fs.StringVar(&cfg.RawDir, "raw-dir", "runs_raw", "")
 	fs.BoolVar(&cfg.DryRun, "dry-run", false, "")
+	samples := "1"
+	fs.StringVar(&samples, "samples", "1", "")
+	fs.StringVar(&cfg.Paraphrases, "paraphrases", "", "")
 	var version bool
 	fs.BoolVar(&version, "version", false, "")
 
@@ -122,6 +145,13 @@ func Parse(args []string, stdout, stderr io.Writer) (cfg *Config, code int, done
 		return fail(fmt.Sprintf("argument --provider: invalid choice: '%s' (choose from %s)",
 			cfg.Provider, strings.Join(quoted, ", ")))
 	}
+	// A type error is also an argparse parse-time error, before the custom
+	// checks below. The message matches scripts/run_probes.py's.
+	n, ok := parseSamples(samples)
+	if !ok {
+		return fail("argument --samples: expected a whole number of 1 or more, got " + pyrepr.String(samples))
+	}
+	cfg.Samples = n
 	if cfg.BaseURL != "" && cfg.Provider == "" {
 		cfg.Provider = "compatible"
 	}
@@ -132,4 +162,19 @@ func Parse(args []string, stdout, stderr io.Writer) (cfg *Config, code int, done
 		return fail("--provider compatible requires --base-url")
 	}
 	return cfg, 0, false
+}
+
+var digits = regexp.MustCompile(`^[0-9]+$`)
+
+// parseSamples accepts what scripts/run_probes.py's positive_int accepts:
+// ASCII digits only (no sign, no spaces, no underscores), value 1 or more.
+func parseSamples(s string) (int, bool) {
+	if !digits.MatchString(s) {
+		return 0, false
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil || n < 1 {
+		return 0, false
+	}
+	return n, true
 }
