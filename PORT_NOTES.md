@@ -128,8 +128,8 @@ characterization scenarios captured from Python.
 - `User-Agent` is `ilubench/<version>` instead of `Python-urllib/3.x`.
 - Request bodies are compact JSON; Python sends spaced JSON. Semantically
   identical.
-- `--version` exists; `--provider xai` exists (post-cutover). Neither is in
-  `runner.py`.
+- `--version` exists; `--provider xai` exists (post-cutover); `--samples` and
+  `--paraphrases` exist (post-cutover 2). None of them is in `runner.py`.
 
 ---
 
@@ -483,3 +483,53 @@ users reach xAI with `--base-url https://api.x.ai/v1 --api-key-env
 XAI_API_KEY`, which the README documents; the parity goldens are
 unaffected because no scenario uses the new name and usage text is not
 compared.
+
+## Post-cutover 2 (2026-10-30): `--samples` and `--paraphrases`
+
+**A contract shared with two other codebases.** Rubric v0.3 adds
+within-language consistency, which needs repeated samples and, later,
+native-authored paraphrases of each probe. The dataset repo's
+`scripts/run_probes.py` and Uche's IlùBench scorer implement the same
+contract: four row fields (`prompt_variant`, `sample_index`, `samples`,
+`sample_group`), `_s<index>` archive names, the same skip rules and the same
+stderr lines for paraphrase rows. `TestParaphraseSkipRules` pins those lines,
+and the Python loader prints the same ones for the same file.
+
+**Off means runner.py.** Both flags default to off, and with them off every
+byte printed or written is what `runner.py` produces; the 40 goldens are
+untouched and still pass, and `TestSamplesOneIsTheDefaultOutput` proves that
+`--samples 1` given explicitly changes nothing. The new behaviour hangs on one
+boolean, `sampled`, and one function, `sampleNames`, so the default path is
+the old path with empty suffixes.
+
+**Paraphrase rows get their own file.** The rubric keeps paraphrased wordings
+out of the canonical matrix, so those rows are appended to a file named after
+`--out` (`runs.jsonl` becomes `runs_paraphrases.jsonl`) and canonical rows,
+including repeated samples of the canonical wording, stay in `--out`.
+Deriving the name avoids a third flag; the dataset script uses
+`runs_v0_paraphrases.jsonl` beside `runs_v0.jsonl` by the same rule.
+
+**Run ids and archive names gain the variant and the index.** Uche's
+importer rejects a file with a repeated `run_id` and stores a sampled row
+under `<run_id>-<prompt_variant>-s<index>` unless the run id already ends
+that way, so sampled run ids end exactly that way and the stored key is the
+run id. Archive names gain `_s<index>`, as the contract says, and paraphrase
+archives also carry the variant id, since `_s0` alone would overwrite the
+canonical archive. The variant id must be a lowercase slug for the same
+reason.
+
+**The pending file is a test fixture.** The shipped paraphrase file has every
+prompt empty and every row `pending_native_authoring`. The tests run that
+shape and prove no paraphrase call is made, then approve one row filled with
+`<IGBO_FIXTURE>` and prove it runs and lands in the separate file. The runner
+never contains Igbo text of its own.
+
+**`sample_group` follows the contract and omits the model.** It is
+`<UTC date>_<provider>_<probe_id>_<prompt_variant>`. Through `compatible` or
+`openai`, two models run on the same day share a group string, so consumers
+group by model as well; the README says so.
+
+**Deviation from `runner.py`.** These flags are not in `runner.py`, like
+`--provider xai`; the parity goldens never pass them and usage text is not
+compared, so they cost nothing in parity.
+

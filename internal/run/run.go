@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -165,6 +166,38 @@ func Main(ctx context.Context, args []string, o Options) int {
 		return 1
 	}
 
+	// Sampled output (rubric v0.3): --samples above 1 or a paraphrase file.
+	// Without either, everything below prints and writes exactly what
+	// runner.py does.
+	sampled := cfg.Samples > 1 || cfg.Paraphrases != ""
+	var paraphrases map[string][]probes.Paraphrase
+	if cfg.Paraphrases != "" {
+		warn := func(line string) { fmt.Fprintln(o.Stderr, line) }
+		var skipped int
+		paraphrases, skipped, err = probes.LoadParaphrases(cfg.Paraphrases, probeIDs, warn)
+		if err != nil {
+			var pe *probes.Error
+			if !errors.As(err, &pe) {
+				pe = &probes.Error{Kind: probes.KindFetch, Msg: err.Error()}
+			}
+			switch pe.Kind {
+			case probes.KindNotFound:
+				fmt.Fprintf(out, "ERROR: paraphrase file not found: %s\n", cfg.Paraphrases)
+			case probes.KindBad:
+				fmt.Fprintf(out, "ERROR: bad paraphrase file %s: %s\n", cfg.Paraphrases, pe.Msg)
+			default:
+				fmt.Fprintf(out, "ERROR: could not read paraphrase file: %s\n", cfg.Paraphrases)
+			}
+			return 1
+		}
+		approved := 0
+		for _, ps := range paraphrases {
+			approved += len(ps)
+		}
+		fmt.Fprintf(o.Stderr, "paraphrases: %d approved wording(s) to run, %d row(s) skipped (%s)\n",
+			approved, skipped, cfg.Paraphrases)
+	}
+
 	endpoint := baseURL
 	if endpoint == "" {
 		endpoint = displayEndpoint[cfg.Provider]
@@ -181,10 +214,26 @@ func Main(ctx context.Context, args []string, o Options) int {
 	fmt.Fprintf(out, "Provider:  %s (%s)\n", cfg.Provider, endpoint)
 	fmt.Fprintf(out, "Model:     %s\n", model)
 	fmt.Fprintf(out, "Key:       %s is %s\n", keyEnv, keyState)
-	fmt.Fprintf(out, "Plan:      %d probes x 2 arms = %d API calls, no system prompt, provider default sampling\n",
-		len(probeIDs), len(probeIDs)*2)
-	for _, id := range probeIDs {
-		fmt.Fprintf(out, "  %s  arm_A (English prompt) + arm_B (Igbo prompt)\n", id)
+	if sampled {
+		total := 0
+		for _, id := range probeIDs {
+			total += 1 + len(paraphrases[id])
+		}
+		fmt.Fprintf(out, "Plan:      %d probes, %d wording(s), %d sample(s) each x 2 arms = %d API calls, no system prompt, provider default sampling\n",
+			len(probeIDs), total, cfg.Samples, total*cfg.Samples*2)
+		for _, id := range probeIDs {
+			names := []string{probes.Canonical}
+			for _, p := range paraphrases[id] {
+				names = append(names, p.Variant)
+			}
+			fmt.Fprintf(out, "  %s  arm_A (English prompt) + arm_B (Igbo prompt); wordings: %s\n", id, strings.Join(names, ", "))
+		}
+	} else {
+		fmt.Fprintf(out, "Plan:      %d probes x 2 arms = %d API calls, no system prompt, provider default sampling\n",
+			len(probeIDs), len(probeIDs)*2)
+		for _, id := range probeIDs {
+			fmt.Fprintf(out, "  %s  arm_A (English prompt) + arm_B (Igbo prompt)\n", id)
+		}
 	}
 
 	if cfg.DryRun {
@@ -227,7 +276,7 @@ func Main(ctx context.Context, args []string, o Options) int {
 	}
 
 	j := &job{cfg: cfg, out: out, errOut: o.Stderr, endpoint: endpoint, set: set, probeIDs: probeIDs,
-		client: client, secrets: secrets, now: o.Now}
+		client: client, secrets: secrets, now: o.Now, sampled: sampled, paraphrases: paraphrases}
 	return j.execute(ctx)
 }
 
@@ -249,6 +298,9 @@ type job struct {
 	client   *provider.Client
 	secrets  []string
 	now      func() time.Time
+
+	sampled     bool                           // rubric v0.3 sampled output is on
+	paraphrases map[string][]probes.Paraphrase // approved wordings by probe id
 }
 
 // execute is the arm loop of runner.main(), with its exact side-effect
@@ -270,71 +322,89 @@ func (j *job) execute(ctx context.Context) int {
 	}
 
 	today := j.now().Format("2006-01-02") // local date, computed once, like date.today()
+	// sample_group carries the run date in UTC, fixed once for the whole run.
+	runDateUTC := j.now().UTC().Format("2006-01-02")
 	modelSlug := slug(j.cfg.Model)
-	var rows []pyjson.Value
+	var rows, paraRows []pyjson.Value
 	failures := 0
 
 	for _, pid := range j.probeIDs {
 		probe := j.set.ByID[pid]
-		arms := map[string]*pyjson.Object{}
-		reported := j.cfg.Model
-		for _, arm := range []struct{ name, prompt string }{{"arm_A", probe.PromptEN}, {"arm_B", probe.PromptIG}} {
-			comp, err := j.client.Complete(ctx, j.cfg.Model, arm.prompt)
-			if err != nil {
-				if ctx.Err() != nil {
-					return interrupted(j.errOut, fmt.Sprintf("during %s %s after %d completed probe(s)", pid, arm.name, len(rows)))
+		wordings := append([]probes.Paraphrase{{Variant: probes.Canonical, PromptEN: probe.PromptEN, PromptIG: probe.PromptIG}},
+			j.paraphrases[pid]...)
+		for _, w := range wordings {
+			for index := 0; index < j.cfg.Samples; index++ {
+				n := j.sampleNames(today, runDateUTC, modelSlug, rawDir, pid, w.Variant, index)
+				arms := map[string]*pyjson.Object{}
+				reported := j.cfg.Model
+				for _, arm := range []struct{ name, prompt string }{{"arm_A", w.PromptEN}, {"arm_B", w.PromptIG}} {
+					comp, err := j.client.Complete(ctx, j.cfg.Model, arm.prompt)
+					if err != nil {
+						if ctx.Err() != nil {
+							return interrupted(j.errOut, fmt.Sprintf("during %s %s after %d completed %s",
+								n.label, arm.name, len(rows)+len(paraRows), n.unit))
+						}
+						fmt.Fprintf(out, "  FAIL %s %s: %s\n", n.label, arm.name, provider.Detail(err, j.secrets))
+						arms = nil
+						break
+					}
+					reported = comp.ReportedModel
+					rawPath := pyJoin(rawDir, n.prefix+"_"+arm.name+n.suffix+".json")
+					record := pyjson.NewObject().
+						Set("date_utc", isoformatUTC(j.now())).
+						Set("provider", j.cfg.Provider).
+						Set("endpoint", j.endpoint).
+						Set("requested_model", j.cfg.Model).
+						Set("reported_model", reported).
+						Set("probe_id", pid).
+						Set("arm", arm.name)
+					j.setSampleFields(record, n)
+					record.
+						Set("prompt", arm.prompt).
+						Set("response_text", comp.Text).
+						Set("raw_api_response", comp.Raw)
+					data, err := pyjson.MarshalIndent(record, 2)
+					if err == nil {
+						err = writeFileAtomic(filepath.FromSlash(rawPath), data)
+					}
+					if err != nil {
+						fmt.Fprintf(out, "\nERROR: could not write %s: %v\n", rawPath, err)
+						return 1
+					}
+					lang := langid.Detect(comp.Text)
+					arms[arm.name] = pyjson.NewObject().
+						Set("output_language", lang).
+						Set("epistemic_frame", "pending_human_score").
+						Set("anchor_source", "pending_human_score").
+						Set("notes", langid.FactualNotes(comp.Text, rawPath))
+					fmt.Fprintf(out, "  ok %s %s: output_language=%s\n", n.label, arm.name, lang)
 				}
-				fmt.Fprintf(out, "  FAIL %s %s: %s\n", pid, arm.name, provider.Detail(err, j.secrets))
-				arms = nil
-				break
+				if arms == nil {
+					failures++
+					continue
+				}
+				row := pyjson.NewObject().
+					Set("run_id", n.runID).
+					Set("date", today).
+					Set("provider", j.cfg.Provider).
+					Set("model", reported).
+					Set("interface", "API").
+					Set("probe_id", pid)
+				j.setSampleFields(row, n)
+				row.
+					Set("arm_A", arms["arm_A"]).
+					Set("arm_B", arms["arm_B"]).
+					Set("register_delta", "pending_human_score").
+					Set("reading", "pending_human_score").
+					Set("cultural_correctness", "pending_native_review").
+					Set("evidence", n.evidence)
+				if w.Variant == probes.Canonical {
+					rows = append(rows, row)
+				} else {
+					paraRows = append(paraRows, row)
+				}
 			}
-			reported = comp.ReportedModel
-			rawPath := pyJoin(rawDir, fmt.Sprintf("%s_%s_%s_%s_%s.json", today, j.cfg.Provider, modelSlug, pid, arm.name))
-			record := pyjson.NewObject().
-				Set("date_utc", isoformatUTC(j.now())).
-				Set("provider", j.cfg.Provider).
-				Set("endpoint", j.endpoint).
-				Set("requested_model", j.cfg.Model).
-				Set("reported_model", reported).
-				Set("probe_id", pid).
-				Set("arm", arm.name).
-				Set("prompt", arm.prompt).
-				Set("response_text", comp.Text).
-				Set("raw_api_response", comp.Raw)
-			data, err := pyjson.MarshalIndent(record, 2)
-			if err == nil {
-				err = writeFileAtomic(filepath.FromSlash(rawPath), data)
-			}
-			if err != nil {
-				fmt.Fprintf(out, "\nERROR: could not write %s: %v\n", rawPath, err)
-				return 1
-			}
-			lang := langid.Detect(comp.Text)
-			arms[arm.name] = pyjson.NewObject().
-				Set("output_language", lang).
-				Set("epistemic_frame", "pending_human_score").
-				Set("anchor_source", "pending_human_score").
-				Set("notes", langid.FactualNotes(comp.Text, rawPath))
-			fmt.Fprintf(out, "  ok %s %s: output_language=%s\n", pid, arm.name, lang)
 		}
-		if arms == nil {
-			failures++
-			continue
-		}
-		rows = append(rows, pyjson.NewObject().
-			Set("run_id", fmt.Sprintf("run-%s-%s-%s-%s", today, j.cfg.Provider, modelSlug, pid)).
-			Set("date", today).
-			Set("provider", j.cfg.Provider).
-			Set("model", reported).
-			Set("interface", "API").
-			Set("probe_id", pid).
-			Set("arm_A", arms["arm_A"]).
-			Set("arm_B", arms["arm_B"]).
-			Set("register_delta", "pending_human_score").
-			Set("reading", "pending_human_score").
-			Set("cultural_correctness", "pending_native_review").
-			Set("evidence", fmt.Sprintf("%s/%s_%s_%s_%s_*.json (local archive, not committed)",
-				rawDir, today, j.cfg.Provider, modelSlug, pid)))
 	}
 
 	if len(rows) > 0 {
@@ -343,14 +413,28 @@ func (j *job) execute(ctx context.Context) int {
 			return 1
 		}
 	}
+	paraOut := paraphraseOut(j.cfg.Out)
+	if len(paraRows) > 0 {
+		if err := appendRows(paraOut, paraRows); err != nil {
+			fmt.Fprintf(out, "\nERROR: could not append rows to %s: %v\n", paraOut, err)
+			return 1
+		}
+	}
 	summary := fmt.Sprintf("\nAppended %d row(s) to %s", len(rows), j.cfg.Out)
+	if j.cfg.Paraphrases != "" {
+		summary += fmt.Sprintf(" and %d row(s) to %s", len(paraRows), paraOut)
+	}
+	unit := "probe(s)"
+	if j.sampled {
+		unit = "sample(s)"
+	}
 	if failures > 0 {
-		summary += fmt.Sprintf("; %d probe(s) failed.", failures)
+		summary += fmt.Sprintf("; %d %s failed.", failures, unit)
 	} else {
 		summary += "."
 	}
 	fmt.Fprintln(out, summary)
-	if len(rows) > 0 {
+	if len(rows)+len(paraRows) > 0 {
 		fmt.Fprintln(out, "Next: human-score the pending axes against rubric.md (https://huggingface.co/datasets/UUAMNI/ilubench).")
 	}
 	if failures > 0 {
@@ -400,4 +484,78 @@ func newClient(name, baseURL, key string, o Options) *provider.Client {
 		c.Dialect, c.Root = provider.Google, o.GoogleRoot
 	}
 	return c
+}
+
+// names is everything that identifies one sample of one wording of a probe:
+// how it is labelled on stdout, its run id, its archive names and its
+// evidence glob, and its rubric v0.3 sampling fields.
+type names struct {
+	label    string // "ilu-003", or "ilu-003 para1 s2" when sampled
+	unit     string // what the interrupt notice counts
+	runID    string
+	prefix   string // raw archive name before "_arm_X"
+	suffix   string // raw archive name after "_arm_X": "" or "_s<index>"
+	evidence string
+	variant  string
+	index    int
+	group    string // sample_group
+}
+
+// sampleNames builds the names for one sample. Without sampled output they
+// are runner.py's names exactly. With it, the run id ends in
+// -<prompt_variant>-s<index>, the key Uche's importer stores a sampled row
+// under, so every row's run id is distinct; archive names gain _s<index>,
+// and paraphrase archives also carry the variant id so they never overwrite
+// the canonical ones.
+func (j *job) sampleNames(today, runDateUTC, modelSlug, rawDir, pid, variant string, index int) names {
+	base := fmt.Sprintf("%s_%s_%s_%s", today, j.cfg.Provider, modelSlug, pid)
+	runID := fmt.Sprintf("run-%s-%s-%s-%s", today, j.cfg.Provider, modelSlug, pid)
+	if !j.sampled {
+		return names{label: pid, unit: "probe(s)", runID: runID, prefix: base,
+			evidence: fmt.Sprintf("%s/%s_*.json (local archive, not committed)", rawDir, base)}
+	}
+	if variant != probes.Canonical {
+		base += "_" + variant
+	}
+	return names{
+		label:    fmt.Sprintf("%s %s s%d", pid, variant, index),
+		unit:     "sample(s)",
+		runID:    fmt.Sprintf("%s-%s-s%d", runID, variant, index),
+		prefix:   base,
+		suffix:   fmt.Sprintf("_s%d", index),
+		evidence: fmt.Sprintf("%s/%s_arm_*_s%d.json (local archive, not committed)", rawDir, base, index),
+		variant:  variant,
+		index:    index,
+		group:    fmt.Sprintf("%s_%s_%s_%s", runDateUTC, j.cfg.Provider, pid, variant),
+	}
+}
+
+// setSampleFields adds the four rubric v0.3 fields to a row or raw archive
+// record when sampled output is on, and nothing otherwise.
+func (j *job) setSampleFields(o *pyjson.Object, n names) {
+	if !j.sampled {
+		return
+	}
+	o.Set("prompt_variant", n.variant).
+		Set("sample_index", pyjson.Number(strconv.Itoa(n.index))).
+		Set("samples", pyjson.Number(strconv.Itoa(j.cfg.Samples))).
+		Set("sample_group", n.group)
+}
+
+// paraphraseOut is where paraphrase rows are appended: --out with
+// "_paraphrases" before its extension (runs.jsonl becomes
+// runs_paraphrases.jsonl), so paraphrase rows stay out of the canonical rows
+// file. A name with no extension gets ".jsonl"; a dot file such as ".jsonl"
+// counts as having none, as pathlib's suffix does.
+func paraphraseOut(out string) string {
+	dir, base := filepath.Split(out)
+	ext := filepath.Ext(base)
+	stem := strings.TrimSuffix(base, ext)
+	if stem == "" {
+		stem, ext = base, ""
+	}
+	if ext == "" {
+		ext = ".jsonl"
+	}
+	return dir + stem + "_paraphrases" + ext
 }

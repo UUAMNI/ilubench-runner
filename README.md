@@ -61,7 +61,7 @@ Keys are read from environment variables only, are never printed, and are never 
 python runner.py --provider anthropic --model <model-id>
 ```
 
-The one difference in scope is `--provider xai`, which the Go binary added after the port; with `runner.py`, reach xAI with `--base-url https://api.x.ai/v1 --api-key-env XAI_API_KEY`.
+The differences in scope are `--provider xai` and the rubric v0.3 flags `--samples` and `--paraphrases`, which the Go binary added after the port. With `runner.py`, reach xAI with `--base-url https://api.x.ai/v1 --api-key-env XAI_API_KEY`; the two v0.3 flags are in the dataset repo's `scripts/run_probes.py`, which follows the same contract.
 
 ## The human-scoring boundary
 
@@ -107,6 +107,22 @@ One JSONL row per probe × model pair, appended to `runs.jsonl`:
 
 Each arm's complete raw API response — prompt, response text, exact reported model id, UTC timestamp, and the provider's full JSON — is written to `runs_raw/`, which is git-ignored. Keep it: it is your evidence archive for scoring and audit.
 
+## Repeated samples and paraphrases (rubric v0.3)
+
+Rubric v0.3 adds within-language consistency: whether a model gives the same kind of answer when it is asked again in the same language. Two flags collect the samples it needs. Both are off by default, and without them the output above is unchanged byte for byte.
+
+```bash
+ilubench --provider anthropic --model <model-id> --samples 5
+ilubench --provider anthropic --model <model-id> --paraphrases probe_paraphrases_v0.3.jsonl
+```
+
+- `--samples K` asks every wording K times, each a fresh call.
+- `--paraphrases PATH` also runs the approved wordings in the dataset's native-authored paraphrase file. A row that is not approved, or has an empty prompt, is skipped with a line on stderr. Every slot in `probe_paraphrases_v0.3.jsonl` is pending native authoring today, so the flag changes no calls until a slot is filled and approved.
+
+With either flag, every row gains four fields: `prompt_variant` (`canonical` for the probe set's own wording, or the paraphrase's variant id), `sample_index` (0 to K-1), `samples` (K) and `sample_group` (`<YYYY-MM-DD>_<provider>_<probe_id>_<prompt_variant>`, with the run date in UTC). Run ids end in `-<prompt_variant>-s<index>`, raw archive names gain `_s<index>`, and paraphrase archives also carry the variant id. Paraphrase rows are appended to their own file, named after `--out` (`runs_paraphrases.jsonl` by default), so they stay out of the rows you contribute to the published matrix. `sample_group` does not name the model, so group rows by model as well when you compare samples.
+
+The runner only collects samples. Consistency is computed and reported by the IlùBench scorer, per arm, as consistency in English and consistency in Igbo, apart from the register delta and never used to rank models.
+
 ## Protocol invariants
 
 If you change any of these, your rows are not comparable to published IlùBench rows:
@@ -114,7 +130,7 @@ If you change any of these, your rows are not comparable to published IlùBench 
 1. One fresh API call per arm — no shared conversation state.
 2. No system prompt.
 3. Provider default sampling — no `temperature` or `top_p` overrides. (Anthropic's API requires an output cap; the runner uses `max_tokens: 2048` there.)
-4. Both arms of every probe, verbatim — `prompt_en` is arm A, `prompt_ig` is arm B. Never paraphrase a probe.
+4. Both arms of every probe, verbatim — `prompt_en` is arm A, `prompt_ig` is arm B. Never paraphrase a probe. Paraphrased wordings come only from the native-authored paraphrase file through `--paraphrases`, and their rows go to a separate file used only for within-language consistency.
 5. Record the exact model id the API reports, plus the date — register behavior shifts across model versions.
 
 ## Development
